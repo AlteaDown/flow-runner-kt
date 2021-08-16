@@ -1,17 +1,104 @@
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+
+val ktor_version: String by project
+
 plugins {
-  kotlin("multiplatform") version "1.5.10"
+  kotlin("multiplatform") version "1.5.21"
+  kotlin("plugin.serialization") version "1.5.21"
   application
 }
 
-group = "me.beatd"
-version = "1.0-SNAPSHOT"
+group = "io.viamo"
+version = "1.0"
 
 repositories {
+  mavenCentral()
   jcenter()
 }
 
 kotlin {
-  jvm {
+  kotlinJvm()
+  kotlinJs()
+  kotlinNative()
+
+  sourceSets {
+    val commonMain by getting {
+      dependencies {
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2")
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.2.2")
+      }
+    }
+    val commonTest by getting {
+      dependencies {
+        implementation(kotlin("test"))
+        //implementation("io.ktor:ktor-server-tests:1.5.2")
+        implementation("org.jetbrains.kotlin:kotlin-test:1.5.21")
+      }
+    }
+
+    val jvmMain by getting {
+      dependencies {
+        implementation("io.ktor:ktor-server-netty:1.5.2")
+        implementation("io.ktor:ktor-html-builder:1.5.2")
+        implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
+      }
+    }
+
+    val jvmTest by getting
+    val jsMain by getting {
+      dependencies {
+        implementation("org.jetbrains.kotlinx:kotlinx-nodejs:0.0.7")
+        implementation("org.jetbrains.kotlin-wrappers:kotlin-react:17.0.2-pre.231-kotlin-1.5.21")
+        implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom:17.0.2-pre.231-kotlin-1.5.21")
+        implementation("org.jetbrains.kotlin-wrappers:kotlin-styled:5.3.0-pre.231-kotlin-1.5.21")
+        implementation("org.jetbrains.kotlin-wrappers:kotlin-react-router-dom:5.2.0-pre.231-kotlin-1.5.21")
+        implementation("org.jetbrains.kotlin-wrappers:kotlin-redux:4.1.0-pre.231-kotlin-1.5.21")
+        implementation("org.jetbrains.kotlin-wrappers:kotlin-react-redux:7.2.4-pre.231-kotlin-1.5.21")
+      }
+    }
+    val jsTest by getting
+
+    val nativeMain by creating {
+      dependsOn(commonMain)
+    }
+
+    val nativeTest by creating {
+      dependsOn(commonTest)
+    }
+
+    // Linux
+    val linuxX64Main by getting {
+      dependsOn(nativeMain)
+    }
+
+    val linuxX64Test by getting {
+      dependsOn(nativeTest)
+    }
+
+    // Windows
+    val mingwX64Main by getting {
+      dependsOn(nativeMain)
+    }
+
+    val mingwX64Test by getting {
+      dependsOn(nativeTest)
+    }
+
+    // Mac
+    val macosX64Main by getting {
+      dependsOn(nativeMain)
+    }
+
+    val macosX64Test by getting {
+      dependsOn(nativeTest)
+    }
+  }
+}
+
+fun isWindows(hostOs: String) = hostOs.startsWith("Windows")
+
+fun KotlinMultiplatformExtension.kotlinJvm() {
+  jvm("jvm") {
     compilations.all {
       kotlinOptions.jvmTarget = "1.8"
     }
@@ -20,6 +107,38 @@ kotlin {
     }
     withJava()
   }
+}
+
+fun KotlinMultiplatformExtension.kotlinNative() {
+
+  linuxX64 {
+    binaries {
+      executable {
+        entryPoint = "main"
+      }
+      sharedLib()
+      staticLib()
+    }
+  }
+
+  mingwX64 {
+    binaries {
+      executable {
+        entryPoint = "main"
+      }
+    }
+  }
+
+  macosX64 {
+    binaries {
+      executable {
+        entryPoint = "main"
+      }
+    }
+  }
+}
+
+fun KotlinMultiplatformExtension.kotlinJs() {
   js(IR) {
     binaries.executable()
     browser {
@@ -27,52 +146,11 @@ kotlin {
         cssSupport.enabled = true
       }
     }
-  }
-  val hostOs = System.getProperty("os.name")
-  val nativeTarget = when {
-    hostOs == "Mac OS X" -> macosX64("native")
-    hostOs == "Linux" -> linuxX64("native")
-    isMingwX64(hostOs) -> mingwX64("native")
-    else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
-  }
-
-  nativeTarget.apply {
-    binaries {
-      executable {
-        entryPoint = "main"
-      }
+    nodejs {
     }
-  }
-  sourceSets {
-    val commonMain by getting
-    val commonTest by getting {
-      dependencies {
-        implementation(kotlin("test"))
-      }
-    }
-    val jvmMain by getting {
-      dependencies {
-        implementation("io.ktor:ktor-server-netty:1.5.2")
-        implementation("io.ktor:ktor-html-builder:1.5.2")
-        implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
-      }
-    }
-    val jvmTest by getting
-    val jsMain by getting {
-      dependencies {
-        implementation("org.jetbrains.kotlin-wrappers:kotlin-react:17.0.2-pre.206-kotlin-1.5.10")
-        implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom:17.0.2-pre.206-kotlin-1.5.10")
-        implementation("org.jetbrains.kotlin-wrappers:kotlin-styled:5.3.0-pre.206-kotlin-1.5.10")
-        implementation("org.jetbrains.kotlin-wrappers:kotlin-react-router-dom:5.2.0-pre.206-kotlin-1.5.10")
-        implementation("org.jetbrains.kotlin-wrappers:kotlin-redux:4.0.5-pre.206-kotlin-1.5.10")
-        implementation("org.jetbrains.kotlin-wrappers:kotlin-react-redux:7.2.3-pre.206-kotlin-1.5.10")
-      }
-    }
-    val jsTest by getting
-    val nativeMain by getting
-    val nativeTest by getting
   }
 }
+
 
 application {
   mainClass.set("ServerKt")
@@ -87,5 +165,3 @@ tasks.named<JavaExec>("run") {
   dependsOn(tasks.named<Jar>("jvmJar"))
   classpath(tasks.named<Jar>("jvmJar"))
 }
-
-fun isMingwX64(hostOs: String) = hostOs.startsWith("Windows")

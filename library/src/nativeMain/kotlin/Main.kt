@@ -1,4 +1,5 @@
+import io.viamo.flow.runner.Platform
 
 fun main() {
-  println("Hello, Kotlin/Native!")
+  println("Hello ${Platform().platform}")
 }

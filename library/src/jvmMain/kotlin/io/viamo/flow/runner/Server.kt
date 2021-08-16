@@ -1,9 +1,8 @@
 package io.viamo.flow.runner
 
 import io.ktor.application.*
-import io.ktor.html.*
-import io.ktor.http.*
 import io.ktor.http.content.*
+import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
@@ -25,10 +24,12 @@ fun HTML.index() {
 }
 
 fun main() {
-  embeddedServer(Netty, port = 8080, host = "127.0.0.1") {
+  embeddedServer(Netty, port = 8082, host = "localhost") {
     routing {
       get("/") {
-        call.respondHtml(HttpStatusCode.OK, HTML::index)
+        call.respondText("")
+
+        //call.respondHtml(HttpStatusCode.OK, HTML::index)
       }
       static("/static") {
         resources()

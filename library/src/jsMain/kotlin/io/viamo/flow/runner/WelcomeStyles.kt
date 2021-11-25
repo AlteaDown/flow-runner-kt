@@ -1,7 +1,5 @@
 package io.viamo.flow.runner
 
-import kotlinx.css.*
-import styled.StyleSheet
 
 object WelcomeStyles : StyleSheet("io.viamo.flow.runner.WelcomeStyles", isStatic = true) {
   val textContainer by css {

@@ -1,6 +1,5 @@
 package io.viamo.flow.runner
 
-import io.viamo.flow.runner.model.User
 
 class Greeting {
 

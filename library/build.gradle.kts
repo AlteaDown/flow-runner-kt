@@ -1,11 +1,13 @@
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
-val ktor_version: String by project
+val ktorVersion = "1.6.2"
+val kotlinVersion = "1.6.0"
 
 plugins {
-  kotlin("multiplatform") version "1.5.21"
-  kotlin("plugin.serialization") version "1.5.21"
+  kotlin("multiplatform") version "1.6.0"
+  kotlin("plugin.serialization") version "1.6.0"
   application
+  // kotlin("jvm") version "1.6.0"
 }
 
 group = "io.viamo"
@@ -24,15 +26,17 @@ kotlin {
   sourceSets {
     val commonMain by getting {
       dependencies {
-        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2")
-        implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.2.2")
+        implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.1")
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.1")
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.3.1")
+        implementation("com.benasher44:uuid:0.3.1")
       }
     }
     val commonTest by getting {
       dependencies {
         implementation(kotlin("test"))
         //implementation("io.ktor:ktor-server-tests:1.5.2")
-        implementation("org.jetbrains.kotlin:kotlin-test:1.5.21")
+        implementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
       }
     }
 
@@ -48,12 +52,12 @@ kotlin {
     val jsMain by getting {
       dependencies {
         implementation("org.jetbrains.kotlinx:kotlinx-nodejs:0.0.7")
-        implementation("org.jetbrains.kotlin-wrappers:kotlin-react:17.0.2-pre.231-kotlin-1.5.21")
-        implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom:17.0.2-pre.231-kotlin-1.5.21")
-        implementation("org.jetbrains.kotlin-wrappers:kotlin-styled:5.3.0-pre.231-kotlin-1.5.21")
-        implementation("org.jetbrains.kotlin-wrappers:kotlin-react-router-dom:5.2.0-pre.231-kotlin-1.5.21")
-        implementation("org.jetbrains.kotlin-wrappers:kotlin-redux:4.1.0-pre.231-kotlin-1.5.21")
-        implementation("org.jetbrains.kotlin-wrappers:kotlin-react-redux:7.2.4-pre.231-kotlin-1.5.21")
+        implementation("org.jetbrains.kotlin-wrappers:kotlin-react:17.0.2-pre.251-kotlin-1.5.31")
+        implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom:17.0.2-pre.251-kotlin-1.5.31")
+        implementation("org.jetbrains.kotlin-wrappers:kotlin-styled:5.3.1-pre.251-kotlin-1.5.31")
+        implementation("org.jetbrains.kotlin-wrappers:kotlin-react-router-dom:5.2.0-pre.251-kotlin-1.5.31")
+        implementation("org.jetbrains.kotlin-wrappers:kotlin-redux:4.1.1-pre.251-kotlin-1.5.31")
+        implementation("org.jetbrains.kotlin-wrappers:kotlin-react-redux:7.2.4-pre.251-kotlin-1.5.31")
       }
     }
     val jsTest by getting
@@ -99,7 +103,8 @@ fun isWindows(hostOs: String) = hostOs.startsWith("Windows")
 
 fun KotlinMultiplatformExtension.kotlinJvm() {
   jvm("jvm") {
-    compilations.all {
+
+  compilations.all {
       kotlinOptions.jvmTarget = "1.8"
     }
     testRuns["test"].executionTask.configure {

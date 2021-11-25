@@ -13,7 +13,7 @@ fun Boolean?.toJsonPrimitive() = JsonPrimitive(this)
 
 /** Converts a Map to a JsonObject, including all values, recursively */
 fun Map<*, *>.toJsonElement(): JsonObject {
-  return this.entries.associate { entry ->
+  return entries.associate { entry ->
     val key = entry.key
     if (key is String) {
       when (val entryValue = entry.value) {

@@ -145,35 +145,35 @@ function checkExitsOnBlock(block: IBlock): String | null {
 function blockTypeToInterfaceName(type: String): String | null {
   switch (type) {
     case 'Core.Log':
-      return 'io.viamo.flow.runner.model.block.ILogBlock'
+      return 'io.viamo.flow.runner.block.ILogBlock'
     case 'Core.Case':
-      return 'io.viamo.flow.runner.model.block.ICaseBlock'
+      return 'io.viamo.flow.runner.block.ICaseBlock'
     case 'Core.RunBlock':
-      return 'io.viamo.flow.runner.model.block.IRunFlowBlock'
+      return 'io.viamo.flow.runner.block.IRunFlowBlock'
     case 'Core.Output':
-      return 'io.viamo.flow.runner.model.block.IOutputBlock'
+      return 'io.viamo.flow.runner.block.IOutputBlock'
     case 'Core.SetContactProperty':
-      return 'io.viamo.flow.runner.model.block.ISetContactPropertyBlock'
+      return 'io.viamo.flow.runner.block.ISetContactPropertyBlock'
     case 'Core.SetGroupMembership':
-      return 'io.viamo.flow.runner.model.block.ISetGroupMembershipBlock'
+      return 'io.viamo.flow.runner.block.ISetGroupMembershipBlock'
     case 'ConsoleIO.Print':
-      return 'io.viamo.flow.runner.model.block.IPrintBlock'
+      return 'io.viamo.flow.runner.block.IPrintBlock'
     case 'ConsoleIO.Read':
-      return 'io.viamo.flow.runner.model.block.IReadBlock'
+      return 'io.viamo.flow.runner.block.IReadBlock'
     case 'MobilePrimitives.Message':
-      return 'io.viamo.flow.runner.model.block.IMessageBlock'
+      return 'io.viamo.flow.runner.block.IMessageBlock'
     case 'MobilePrimitives.SelectOneResponse':
-      return 'io.viamo.flow.runner.model.block.ISelectOneResponseBlock'
+      return 'io.viamo.flow.runner.block.ISelectOneResponseBlock'
     case 'MobilePrimitives.SelectManyResponses':
-      return 'io.viamo.flow.runner.model.block.ISelectManyResponseBlock'
+      return 'io.viamo.flow.runner.block.ISelectManyResponseBlock'
     case 'MobilePrimitives.NumericResponse':
-      return 'io.viamo.flow.runner.model.block.INumericResponseBlock'
+      return 'io.viamo.flow.runner.block.INumericResponseBlock'
     case 'MobilePrimitives.OpenResponse':
-      return 'io.viamo.flow.runner.model.block.IOpenResponseBlock'
+      return 'io.viamo.flow.runner.block.IOpenResponseBlock'
     case 'SmartDevices.LocationResponse':
-      return 'io.viamo.flow.runner.model.block.ILocationResponseBlock'
+      return 'io.viamo.flow.runner.block.ILocationResponseBlock'
     case 'SmartDevices.PhotoResponse':
-      return 'io.viamo.flow.runner.model.block.IPhotoResponseBlock'
+      return 'io.viamo.flow.runner.block.IPhotoResponseBlock'
     default:
       return null
   }

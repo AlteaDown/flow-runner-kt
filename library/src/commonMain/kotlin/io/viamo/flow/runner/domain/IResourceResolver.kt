@@ -51,6 +51,6 @@ fun createTextResourceVariantWith(value: String, ctx: IContext): ResourceValue {
   )
 }
 
-fun getResource(context: IContext, resourceId: String): IResourceWithContext {
+/*fun getResource(context: IContext, resourceId: String): IResourceWithContext {
   return ResourceResolver(context).resolve(resourceId)
-}
+}*/

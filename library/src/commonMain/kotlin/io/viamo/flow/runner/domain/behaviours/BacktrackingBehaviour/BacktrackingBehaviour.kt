@@ -145,7 +145,7 @@ class BacktrackingBehaviour : IBackTrackingBehaviour {
   }
 
   suspend fun jumpTo(interaction: IBlockInteraction, context: IContext): IRichCursor {
-    val backtracking = ((this.context.vendor_metadata as unknown) as IContextBacktrackingPlatformMetadata).backtracking
+    val backtracking = ((context.vendor_metadata as unknown) as IContextBacktrackingPlatformMetadata).backtracking
 
     // find a key for provided past interaction
     val keyForLastOccurrenceOfInteraction = deepIndexOfFrom(
@@ -199,7 +199,7 @@ class BacktrackingBehaviour : IBackTrackingBehaviour {
     // todo: This navigateTo() is going to append an interaction onto context.interactions --> verify that context.interactions.splice() accounts for that
     // todo: this should provide a sourceId="" in meta so that we can tie these together
 
-    return this.navigator.navigateTo(findBlockOnActiveFlowWith(interaction.block_id, this.context), this.context)
+    return this.navigator.navigateTo(findBlockOnActiveFlowWith(interaction.block_id, context), context)
   }
 
   suspend fun peek(steps = 1): IPrompt {

@@ -4,7 +4,7 @@ interface IGroup {
   val group_key: String
   val label: String?
   val __value__: String
-    get() = this.group_key
+    get() = group_key
 }
 
 fun isGroup(thing: Any) = thing is IGroup

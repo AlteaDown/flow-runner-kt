@@ -1,10 +1,3 @@
-import io.viamo.flow.runner.ext.toJsonElement
-import io.viamo.flow.runner.ext.toUtcDate
-import io.viamo.flow.runner.flowspec.IContext
-import io.viamo.flow.runner.flowspec.SupportedMode
-import kotlinx.datetime.Clock
-import kotlinx.serialization.json.*
-
 val UUID_MATCHER = Regex("""/[\d\w]{8}(-[\d\w]{4}){3}-[\d\w]{12}/i""")
 
 fun isUUID(uuid: String): Boolean = uuid.length == 36 && UUID_MATCHER.matches(uuid)
@@ -118,6 +111,7 @@ object ResourceResolver {
   }
 }*/
 
+/*
 // todo: push eval stuff into `Expression.evaluate()` abstraction for evalContext + result handling 👇
 fun createEvalContextFrom(context: FlowRunnerContext): IContext {
   val contact = context.contact
@@ -233,4 +227,4 @@ open class BlockWithValue(
     value = value,
     __value__ = value,
   )
-}
+}*/

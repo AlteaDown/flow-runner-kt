@@ -2,7 +2,6 @@ package io.viamo.flow.runner.domain.behaviours
 
 import io.viamo.flow.runner.domain.IFlowNavigator
 import io.viamo.flow.runner.domain.IPromptBuilder
-import io.viamo.flow.runner.flowspec.BlockInteraction
 import io.viamo.flow.runner.flowspec.IBlockInteraction
 import io.viamo.flow.runner.flowspec.IContext
 
@@ -36,7 +35,7 @@ interface IBehaviour {
    * @param interaction
    * @param context
    */
-  fun postInteractionCreate(interaction: IBlockInteraction): BlockInteraction
+  fun postInteractionCreate(interaction: IBlockInteraction): IBlockInteraction
 
   /**
    * {@link io.viamo.flow.runner.domain.FlowRunner} hook:
@@ -46,5 +45,5 @@ interface IBehaviour {
    * @param interaction
    * @param context
    */
-  fun postInteractionComplete(interaction: IBlockInteraction): Unit
+  fun postInteractionComplete(interaction: IBlockInteraction)
 }

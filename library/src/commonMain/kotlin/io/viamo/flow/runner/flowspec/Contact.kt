@@ -15,20 +15,20 @@ data class Contact(
       created_at = createFormattedDate(),
       updated_at = createFormattedDate(),
     )
-      .also { this.properties[name] = it }
+      .also { properties[name] = it }
   }
 
   override fun getProperty(name: String): IContactProperty? {
-    if (this.properties[name] == null) {
+    if (properties[name] == null) {
       return null
     }
-    return this.properties[name] as IContactProperty
+    return properties[name] as IContactProperty
   }
 
   override fun addGroup(group: IGroup) {
-    val existingGroup = this.groups.find { it.group_key == group.group_key }
+    val existingGroup = groups.find { it.group_key == group.group_key }
     if (existingGroup == null) {
-      this.groups.add(ContactGroup(group))
+      groups.add(ContactGroup(group))
     } else {
       existingGroup.updated_at = createFormattedDate()
 
@@ -38,7 +38,7 @@ data class Contact(
   }
 
   override fun delGroup(toRemove: IGroup) {
-    val group = this.groups.find { group -> group.group_key == toRemove.group_key }
+    val group = groups.find { group -> group.group_key == toRemove.group_key }
     if (group != null) {
       createFormattedDate().let { now ->
         group.deleted_at = now

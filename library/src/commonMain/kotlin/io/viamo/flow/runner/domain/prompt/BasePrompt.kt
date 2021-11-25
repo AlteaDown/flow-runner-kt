@@ -5,22 +5,17 @@ import ValidationException
 import io.viamo.flow.runner.domain.IFlowRunner
 import io.viamo.flow.runner.flowspec.*
 
-typealias TGenericPrompt = IPrompt<IPromptConfig<*>, *, *>
-
 /**
  * Abstract implementation of {@link io.viamo.flow.runner.domain.prompt.IPrompt}, intended to be consumed as a common parent for concrete {@link io.viamo.flow.runner.domain.prompt.IPrompt}
  * implementations.
  */
-abstract class BasePrompt<VALUE, PROMPT_CONFIG : IPromptConfig<VALUE>>(
-  open val config: PROMPT_CONFIG,
-  open val interactionId: String,
-  open val runner: IFlowRunner,
-  open var error: PromptValidationException? = null,
-) {
-  abstract val key: String
-
+interface BasePrompt<VALUE> {
+  val config: IPromptConfig<VALUE>
+  val interactionId: String
+  val runner: IFlowRunner
+  val key: String
   var value: VALUE?
-    get() = config.value
+    get() = config.value as VALUE
     set(value) {
       try {
         this.validate(value)
@@ -31,14 +26,17 @@ abstract class BasePrompt<VALUE, PROMPT_CONFIG : IPromptConfig<VALUE>>(
       this.config.value = value
     }
 
+  /** Error populated when {@link io.viamo.flow.runner.domain.prompt.IPrompt.value} assignment raises  */
+  var error: PromptValidationException?
+
   /**
    * Whether or not a value has been set on this instance.
    * TODO:STOPSHIP We need to make a field that tracks whether the field is set, as not all platforms have null
    **/
-  fun isEmpty() = this.value == null
+  fun isEmpty() = value == null
 
   val block
-    get(): IBlock<*>? {
+    get(): IBlock? {
       return try {
         findBlockWith(
           uuid = runner.context.findInteractionWith(interactionId).block_id,
@@ -53,16 +51,18 @@ abstract class BasePrompt<VALUE, PROMPT_CONFIG : IPromptConfig<VALUE>>(
       }
     }
 
-  suspend fun fulfill(value: VALUE?): IRichCursorInputRequired<*, *, *>? {
+  /** @see {@link io.viamo.flow.runner.domain.prompt.io.viamo.flow.runner.jsMain.kotlin."flow-runner".BasePrompt.fulfill} */
+  suspend fun fulfill(value: VALUE?): IRichCursorInputRequired? {
     // allow prompt.fulfill() for continuation
     value?.let { this.value = value }
 
     return this.runner.run()
   }
 
+  /** State populated when {@link io.viamo.flow.runner.domain.prompt.IPrompt.value} is assigned */
   fun isValid(): Boolean {
     return try {
-      this.validate(this.config.value)
+      validate(config.value as VALUE)
     } catch (e: Exception) {
       e.printStackTrace()
       false
@@ -71,7 +71,8 @@ abstract class BasePrompt<VALUE, PROMPT_CONFIG : IPromptConfig<VALUE>>(
 
   /**
    * Template method to be implemented by concrete {@link io.viamo.flow.runner.domain.prompt.IPrompt} implementations.
+   * @see {@link io.viamo.flow.runner.domain.prompt.io.viamo.flow.runner.jsMain.kotlin."flow-runner".BasePrompt.validate
    * @param val
    */
-  abstract fun validate(value: VALUE?): Boolean
+  fun validate(value: Any?): Boolean
 }

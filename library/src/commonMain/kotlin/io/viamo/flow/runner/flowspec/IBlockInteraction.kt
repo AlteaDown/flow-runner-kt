@@ -14,8 +14,8 @@ interface IBlockInteraction {
   val flow_id: String
   val entry_at: String
   var exit_at: String?
-  val has_response: Boolean
-  val value: String?
+  var has_response: Boolean
+  var value: String?
   val details: Map<String, JsonElement>
   var selected_exit_id: String?
   val type: String
@@ -38,11 +38,11 @@ data class BlockInteraction(
   // UUID32
   override val flow_id: String,
   override val entry_at: String,
-  override val exit_at: String?,
-  override val has_response: Boolean,
-  override val value: String?,
+  override var exit_at: String?,
+  override var has_response: Boolean,
+  override var value: String?,
   override val details: Map<String, JsonElement>,
-  override val selected_exit_id: String?,
+  override var selected_exit_id: String?,
   override val type: String,
 
   // UUID64

@@ -1,15 +1,17 @@
 package io.viamo.flow.runner.flowspec
 
-import BlockWithValue
 import ValidationException
-import io.viamo.flow.runner.domain.prompt.IPromptConfig
-import io.viamo.flow.runner.ext.toJsonElement
+import createEvalContextFrom
+import io.viamo.flow.runner.block.IBlockConfig
+import io.viamo.flow.runner.block.SetContactProperty
 import io.viamo.flow.runner.ext.toUtcDate
-import io.viamo.flow.runner.model.block.IBlockConfig
-import io.viamo.flow.runner.model.block.SetContactProperty
-import kotlinx.datetime.*
+import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit.DayBased
-import kotlinx.serialization.json.*
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.jsonPrimitive
 
 /*val module = SerializersModule {
   polymorphic(IBlock::class) {
@@ -20,7 +22,7 @@ import kotlinx.serialization.json.*
 /**
  * Block Structure: https://floip.gitbook.io/flow-specification/flows#blocks
  */
-interface IBlock<out BLOCK_CONFIG : IBlockConfig> {
+interface IBlock {
   /**
    * A globally unique identifier for this Block.  (See UUID Format: https://floip.gitbook.io/flow-specification/flows#uuid-format)
    *
@@ -76,7 +78,7 @@ interface IBlock<out BLOCK_CONFIG : IBlockConfig> {
   /**
    * Additional parameters that are specific to the type of the block. Details are provided within the Block documentation.
    */
-  val config: BLOCK_CONFIG
+  val config: Any
 
   /**
    * a list of all the exits for the block.
@@ -100,11 +102,9 @@ interface IBlockUIMetadata : Map<String, Any> {
   val canvas_coordinates: IBlockUIMetadataCanvasCoordinates
 }
 
-fun findBlockExitWith(uuid: String, block: IBlock<*>): IBlockExit {
-  val exit = block.exits.firstOrNull { it.uuid == uuid }
-  checkNotNull(exit) { "Unable to find exit on block" }
-
-  return exit
+fun findBlockExitWith(uuid: String, block: IBlock): IBlockExit {
+  return block.exits.firstOrNull { it.uuid == uuid }
+      ?: throw IllegalStateException("Unable to find exit on block")
 }
 
 /**
@@ -112,7 +112,7 @@ fun findBlockExitWith(uuid: String, block: IBlock<*>): IBlockExit {
  * @param context
  * @deprecated Use io.viamo.flow.runner."flow-spec".firstTrueOrNullBlockExitOrThrow or io.viamo.flow.runner."flow-spec".firstTrueBlockExitOrNull
  */
-fun findFirstTruthyEvaluatingBlockExitOn(block: IBlock<*>, context: IContext): IBlockExit? {
+fun findFirstTruthyEvaluatingBlockExitOn(block: IBlock, context: IContext): IBlockExit? {
   val exits = block.exits
   if (exits.isEmpty()) {
     throw ValidationException("Unable to find exits on block ${block.uuid}")
@@ -123,7 +123,7 @@ fun findFirstTruthyEvaluatingBlockExitOn(block: IBlock<*>, context: IContext): I
 }
 //({ test, default: isDefault = false }
 
-fun firstTrueBlockExitOrNull(block: IBlock<*>, context: IContext): IBlockExit? {
+fun firstTrueBlockExitOrNull(block: IBlock, context: IContext): IBlockExit? {
   return try {
     firstTrueOrNullBlockExitOrThrow(block, context)
   } catch (e: Exception) {
@@ -131,11 +131,11 @@ fun firstTrueBlockExitOrNull(block: IBlock<*>, context: IContext): IBlockExit? {
   }
 }
 
-fun firstTrueOrNullBlockExitOrThrow(block: IBlock<*>, context: IContext): IBlockExit {
+fun firstTrueOrNullBlockExitOrThrow(block: IBlock, context: IContext): IBlockExit {
   return _firstBlockExit(context, block) ?: throw  ValidationException("All block exits evaluated to false. Block: ${block.uuid}")
 }
 
-fun _firstBlockExit(context: IContext, block: IBlock<*>): IBlockExit? {
+fun _firstBlockExit(context: IContext, block: IBlock): IBlockExit? {
   return try {
     val evalContext = createEvalContextFrom(context)
     block.exits.find { blockExit ->
@@ -147,7 +147,7 @@ fun _firstBlockExit(context: IContext, block: IBlock<*>): IBlockExit? {
   }
 }
 
-fun findDefaultBlockExitOnOrNull(block: IBlock<*>): IBlockExit? {
+fun findDefaultBlockExitOnOrNull(block: IBlock): IBlockExit? {
   try {
     return findDefaultBlockExitOrThrow(block)
   } catch (e: Throwable) {
@@ -156,14 +156,14 @@ fun findDefaultBlockExitOnOrNull(block: IBlock<*>): IBlockExit? {
   }
 }
 
-fun findDefaultBlockExitOrThrow(block: IBlock<*>): IBlockExit {
+fun findDefaultBlockExitOrThrow(block: IBlock): IBlockExit {
   /* We have to test against null, as some default exits are being sent with a value of null
       (MessageBlock, SetGroupMembershipBlock, CaseBlock)*/
   return block.exits.find { blockExit -> blockExit.default ?: false || blockExit.test == null }
       ?: throw ValidationException("Unable to find default exit on block ${block.uuid}")
 }
 
-fun isLastBlock(block: IBlock<*>): Boolean {
+fun isLastBlock(block: IBlock): Boolean {
   return block.exits.all { it.destination_block == null }
 }
 
@@ -178,14 +178,14 @@ interface IEvalContextBlock {
 typealias TEvalContextBlockMap = Map<String, IEvalContextBlock>
 
 // TODO: Define/Return a (EvalContext: IContext) instead of JsonObject
-fun createEvalContextFrom(context: IContext): JsonObject {
+/*fun createEvalContextFrom(context: IContext): JsonObject {
   val contact = context.contact
   val cursor = context.cursor
   val mode = context.mode
   val currentLanguage = context.language_id
 
   var currentFlow: IFlow? = null
-  var currentBlock: IBlock<*>? = null
+  var currentBlock: IBlock? = null
   var currentPrompt: IPromptConfig? = null
 
   if (cursor != null) {
@@ -204,14 +204,14 @@ fun createEvalContextFrom(context: IContext): JsonObject {
     "block" to currentBlock.let { block -> Json.encodeToJsonElement(BlockWithValue(block, currentPrompt?.value ?: JsonNull)) },
     "date" to getDateContext(),
   ).toJsonElement()
-}
+}*/
 
 private fun getContactContext(contact: IContact): IContact {
   return contact.also { it.groups = it.groups.filter { group -> group.deleted_at == null } }
 }
 
 // TODO: Define/Return a (FlowEvalContext: IFlow) instead of JsonObject
-private fun getFlowContext(
+/*private fun getFlowContext(
   currentFlow: IFlow?,
   currentLanguage: String,
   context: IContext,
@@ -244,7 +244,7 @@ private fun getFlowContext(
         .toTypedArray()
     )
   }
-}
+}*/
 
 private fun getDateContext(): Map<String, *> {
   return Clock.System.now().let { now ->
@@ -263,7 +263,8 @@ fun evaluateToBool(expr: String, ctx: IContext): Boolean {
 }
 
 fun evaluateToString(expr: String, ctx: IContext): String {
-  return EvaluatorFactory.create().evaluate(wrapInExprSyntaxWhenAbsent(expr), ctx)
+  // TODO: Was EvaluatorFactory.create().evaluate(wrapInExprSyntaxWhenAbsent(expr), ctx)
+  return "true"
 }
 
 fun wrapInExprSyntaxWhenAbsent(expr: String): String {
@@ -274,16 +275,20 @@ fun wrapInExprSyntaxWhenAbsent(expr: String): String {
  * Set a property on the contact contained in the flow context.
  */
 fun setContactProperty(
-  block: IBlock<*>,
+  block: IBlock,
   context: IContext,
 ) {
-  val setContactProperty = block.config.set_contact_property
-  if (setContactProperty != null) {
-    setSingleContactProperty(setContactProperty, context)
+  block.config.let {
+    if (it is IBlockConfig) {
+      val setContactProperty = it.set_contact_property
+      if (setContactProperty != null) {
+        setSingleContactProperty(setContactProperty, context)
+      }
+    }
   }
 }
 
 fun setSingleContactProperty(property: SetContactProperty, context: IContext) {
-  val value = evaluateToString(property.property_value, createEvalContextFrom(context))
+  val value = evaluateToString(property.property_value, /* TODO: Was createEvalContextFrom(context) */ context)
   context.contact.setProperty(property.property_key, value)
 }

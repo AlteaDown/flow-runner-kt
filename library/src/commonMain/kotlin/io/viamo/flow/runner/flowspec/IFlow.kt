@@ -1,6 +1,6 @@
 package io.viamo.flow.runner.flowspec
 
-import io.viamo.flow.runner.model.block.IBlockConfig
+import io.viamo.flow.runner.block.IBlockConfig
 
 /**
  * Flow structure: https://floip.gitbook.io/flow-specification/flows#flows
@@ -68,7 +68,7 @@ interface IFlow {
    *
    * @minItems 1
    */
-  val blocks: List<IBlock<*>>
+  val blocks: List<IBlock>
 
   /**
    * The ID of the block in blocks that is at the beginning of the flow.
@@ -86,7 +86,7 @@ interface IFlow {
   val exit_block_id: String?
 }
 
-fun findBlockWith(uuid: String, flow: IFlow): IBlock<*> {
+fun findBlockWith(uuid: String, flow: IFlow): IBlock {
   return flow.blocks.firstOrNull { it.uuid == uuid }
       ?: throw IllegalStateException("Unable to find block on flow")
 }

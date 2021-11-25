@@ -2,7 +2,6 @@ package io.viamo.flow.runner.domain.runners
 
 import io.viamo.flow.runner.domain.prompt.IPromptConfig
 import io.viamo.flow.runner.flowspec.*
-import io.viamo.flow.runner.model.block.IBlockConfig
 
 /**
  * Interface for running a new block type.
@@ -21,18 +20,16 @@ import io.viamo.flow.runner.model.block.IBlockConfig
  *   Flow should continue by returning the desired {@link io.viamo.flow.runner."flow-spec".IBlockExit} to be used. In some cases we always resolve to a
  *   single exit, but many cases have more complexity around this part of the puzzle.
  */
-interface IBlockRunner<VALUE, BLOCK_CONFIG, PROMPT_CONFIG>
-    where BLOCK_CONFIG : IBlockConfig,
-          PROMPT_CONFIG : IPromptConfig {
+interface IBlockRunner<T> {
 
-  val block: IBlock<BLOCK_CONFIG>
+  val block: IBlock
   val context: IContext
 
   /**
    * Converts an interaction and its block property into either a prompt configuration or "null".
    * @param interaction
    */
-  suspend fun initialize(interaction: IBlockInteraction): IPromptConfig?
+  suspend fun initialize(interaction: IBlockInteraction): IPromptConfig<T>?
 
   /**
    * Takes the current point in our interaction history and performs some local logic to decide how the Flow should
@@ -40,5 +37,5 @@ interface IBlockRunner<VALUE, BLOCK_CONFIG, PROMPT_CONFIG>
    * but many cases have more complexity around this part of the puzzle.
    * @param cursor
    */
-  suspend fun run(cursor: IRichCursor<VALUE, BLOCK_CONFIG, PROMPT_CONFIG>): IBlockExit
+  suspend fun run(cursor: IRichCursor): IBlockExit
 }

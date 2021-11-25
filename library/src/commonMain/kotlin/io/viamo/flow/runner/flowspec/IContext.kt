@@ -1,91 +1,18 @@
 package io.viamo.flow.runner.flowspec
 
 import ValidationException
+import io.viamo.flow.runner.block.run_flow.IRunFlowBlockConfig
 import io.viamo.flow.runner.collections.Stack
 import io.viamo.flow.runner.domain.IIdGenerator
 import io.viamo.flow.runner.domain.IdGeneratorUuidV4
 import io.viamo.flow.runner.domain.createFormattedDate
-import io.viamo.flow.runner.domain.prompt.IPrompt
-import io.viamo.flow.runner.domain.prompt.IPromptConfig
-import io.viamo.flow.runner.model.block.IBlockConfig
-import io.viamo.flow.runner.model.block.IRunFlowBlockConfig
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 
-interface ICursor {
-  /**
-   * UUID of the current interaction with a block.
-   */
-  val interactionId: String
-
-  /**
-   * A prompt configuration data object; optional, because not every block requests input from the io.viamo.flow.runner."flow-spec".Contact.
-   * If it does, we call it an "io.viamo.flow.runner."flow-spec".ICursorInputRequired".
-   * If not, "io.viamo.flow.runner."flow-spec".ICursorNoInputRequired" will have a "null-ish" "promptConfig".
-   */
-  val promptConfig: IPromptConfig<*>?
-}
-
-data class Cursor(
-  override val interactionId: String,
-  override val promptConfig: IPromptConfig<*>?,
-) : ICursor
-
-interface ICursorInputRequired : ICursor {
-  override val interactionId: String
-  override val promptConfig: IPromptConfig<*>
-}
-
-interface ICursorNoInputRequired : ICursor {
-  override val interactionId: String
-  override val promptConfig: IPromptConfig<*>?
-}
-
-interface IRichCursor<VALUE_TYPE, BLOCK_CONFIG_TYPE : IBlockConfig, PROMPT_CONFIG : IPromptConfig<VALUE_TYPE>> {
-  /**
-   * An object representation of the current interaction with a block.
-   */
-  val interaction: IBlockInteraction
-
-  /**
-   * In io.viamo.flow.runner.domain.prompt.IPrompt instance.
-   * When present, we call it a TRichCursorInputRequired.
-   * In absence, the TRichCursorNoInputRequired will maintain "prompt" with a null-ish value.
-   */
-  var prompt: IPrompt<PROMPT_CONFIG, VALUE_TYPE, BLOCK_CONFIG_TYPE>?
-}
-
-data class RichCursor<VALUE_TYPE, BLOCK_CONFIG_TYPE, PROMPT_CONFIG>(
-  override val interaction: IBlockInteraction,
-
-  /**
-   * In io.viamo.flow.runner.domain.prompt.IPrompt instance.
-   * When present, we call it a TRichCursorInputRequired.
-   * In absence, the TRichCursorNoInputRequired will maintain "prompt" with a null-ish value.
-   */
-  override val prompt: IPrompt<PROMPT_CONFIG, VALUE_TYPE, BLOCK_CONFIG_TYPE>?,
-) : IRichCursor<VALUE_TYPE, BLOCK_CONFIG_TYPE, PROMPT_CONFIG>
-    where PROMPT_CONFIG : IPromptConfig<VALUE_TYPE>,
-          BLOCK_CONFIG_TYPE : IBlockConfig
-
-interface IRichCursorInputRequired<PROMPT_CONFIG, VALUE_TYPE, BLOCK_CONFIG_TYPE>
-    where PROMPT_CONFIG : IPromptConfig<VALUE_TYPE>,
-          BLOCK_CONFIG_TYPE : IBlockConfig {
-  val interaction: IBlockInteraction
-  val prompt: IPrompt<PROMPT_CONFIG, VALUE_TYPE, BLOCK_CONFIG_TYPE>
-}
-
-data class RichCursorInputRequired<PROMPT_CONFIG, VALUE_TYPE, BLOCK_CONFIG_TYPE>(
-  override val interaction: IBlockInteraction,
-  override val prompt: IPrompt<PROMPT_CONFIG, VALUE_TYPE, BLOCK_CONFIG_TYPE>,
-) : IRichCursorInputRequired<PROMPT_CONFIG, VALUE_TYPE, BLOCK_CONFIG_TYPE>
-    where PROMPT_CONFIG : IPromptConfig<VALUE_TYPE>,
-          BLOCK_CONFIG_TYPE : IBlockConfig
-
 interface IReversibleUpdateOperation {
   val interactionId: String?
-  val forward: NonBreakingUpdateOperation
-  val reverse: NonBreakingUpdateOperation
+  val forward:/* TODO Was NonBreakingUpdateOperation */ Any
+  val reverse: /* TODO Was NonBreakingUpdateOperation */ Any
 }
 
 interface IContext {
@@ -104,7 +31,7 @@ interface IContext {
   val interactions: List<IBlockInteraction>
   val nested_flow_block_interaction_id_stack: Stack<String>
   val reversible_operations: List<IReversibleUpdateOperation>
-  var cursor: ICursor?
+  val cursor: ICursor?
   val flows: List<IFlow>
   val first_flow_id: String
   val resources: IResources
@@ -148,7 +75,7 @@ interface IContext {
         ?: throw ValidationException("Unable to find flow on context: $uuid in ${flows.map { it.uuid }}")
   }
 
-  fun findBlockOnActiveFlowWith(uuid: String): IBlock<*> {
+  fun findBlockOnActiveFlowWith(uuid: String): IBlock {
     return findBlockWith(uuid, getActiveFlowFrom())
   }
 
@@ -168,7 +95,7 @@ interface IContext {
 
   fun getActiveFlowFrom() = findFlowWith(getActiveFlowIdFrom())
 
-  fun isLastBlockOn(block: IBlock<*>): Boolean {
+  fun isLastBlockOn(block: IBlock): Boolean {
     return !isNested() && isLastBlock(block)
   }
 
@@ -178,7 +105,7 @@ interface IContext {
 }
 
 interface IContextWithCursor : IContext {
-  override val cursor: ICursor
+  override var cursor: ICursor
 }
 
 interface IContextInputRequired : IContext {

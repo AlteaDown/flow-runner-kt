@@ -14,15 +14,15 @@ class ContactProperty(
   override var contact_property_field_name: String = contact_property_field_name
     set(value) {
       field = value
-      this.updated_at = createFormattedDate()
+      updated_at = createFormattedDate()
     }
 
   // TODO: Consider using copy mechanics for this
   override var __value__
-    get(): String? = this.value
+    get(): String? = value
     set(value) {
       this.value = value
-      this.updated_at = createFormattedDate()
+      updated_at = createFormattedDate()
     }
 }
 

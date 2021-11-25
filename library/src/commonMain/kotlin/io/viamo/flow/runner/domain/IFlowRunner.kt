@@ -1,11 +1,9 @@
 package io.viamo.flow.runner.domain
 
-import io.viamo.flow.runner.domain.prompt.IPromptConfig
 import io.viamo.flow.runner.domain.runners.IBlockRunner
 import io.viamo.flow.runner.flowspec.*
-import io.viamo.flow.runner.model.block.IBlockConfig
 
-typealias TBlockRunnerFactory = (block: IBlock<*>, ctx: Context) -> IBlockRunner<*, out IBlockConfig, out IPromptConfig<*>>
+typealias TBlockRunnerFactory = (block: IBlock, ctx: Context) -> IBlockRunner<*>
 
 typealias IBlockRunnerFactoryStore = Map<String, TBlockRunnerFactory>
 
@@ -15,9 +13,9 @@ interface IFlowRunner {
 
   // new (context: io.viamo.flow.runner."flow-spec".IContext): io.viamo.flow.runner.domain.IFlowRunner
 
-  suspend fun initialize(): IRichCursor<*, *, *>?
+  suspend fun initialize(): IRichCursor?
 
-  suspend fun run(): IRichCursorInputRequired<*, *, *>?
+  suspend fun run(): IRichCursorInputRequired?
 
-  fun applyReversibleDataOperation(forward: NonBreakingUpdateOperation, reverse: NonBreakingUpdateOperation, context: IContext): Unit
+  fun applyReversibleDataOperation(forward: Any, reverse: Any)
 }

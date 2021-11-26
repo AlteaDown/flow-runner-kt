@@ -136,13 +136,13 @@ data class FlowRunner(
    * Decipher whether or not cursor points to the first interactive block or not.
    */
   fun isFirst(): Boolean {
-    if (!isInitialized()) {
-      return true
+    return if (isInitialized()) {
+      context.interactions.find { !NON_INTERACTIVE_BLOCK_TYPES.contains(it.type) }
+        ?.let { it.uuid == context.cursor?.interactionId }
+          ?: true
+    } else {
+      true
     }
-
-    return context.interactions.find { !NON_INTERACTIVE_BLOCK_TYPES.contains(it.type) }
-      ?.let { it.uuid == context.cursor?.interactionId }
-        ?: true
   }
 
   /**

@@ -1,7 +1,6 @@
 package io.viamo.flow.runner.flowspec
 
 import ValidationException
-import createEvalContextFrom
 import io.viamo.flow.runner.block.IBlockConfig
 import io.viamo.flow.runner.block.SetContactProperty
 import io.viamo.flow.runner.ext.toUtcDate
@@ -18,7 +17,6 @@ import kotlinx.serialization.json.jsonPrimitive
     subclass(OwnedProject::class)
   }
 }*/
-
 /**
  * Block Structure: https://floip.gitbook.io/flow-specification/flows#blocks
  */
@@ -118,8 +116,10 @@ fun findFirstTruthyEvaluatingBlockExitOn(block: IBlock, context: IContext): IBlo
     throw ValidationException("Unable to find exits on block ${block.uuid}")
   }
 
-  val evalContext = createEvalContextFrom(context)
-  return exits.find { exit -> !(exit.default ?: false) && evaluateToBool(exit.test ?: error("exit.test was null"), evalContext) }
+  /* TODO: Was
+  *   val evalContext = createEvalContextFrom(context)
+  *   return exits.find { exit -> !(exit.default ?: false) && evaluateToBool(exit.test ?: error("exit.test was null"), evalContext) }*/
+  return exits.firstOrNull()
 }
 //({ test, default: isDefault = false }
 
@@ -137,10 +137,10 @@ fun firstTrueOrNullBlockExitOrThrow(block: IBlock, context: IContext): IBlockExi
 
 fun _firstBlockExit(context: IContext, block: IBlock): IBlockExit? {
   return try {
-    val evalContext = createEvalContextFrom(context)
-    block.exits.find { blockExit ->
-      evaluateToBool(blockExit.test.toString(), evalContext)
-    } ?: findDefaultBlockExitOnOrNull(block)
+    /* TODO: Was
+    *   val evalContext = createEvalContextFrom(context)
+    *   block.exits.find { blockExit -> evaluateToBool(blockExit.test.toString(), evalContext) } ?: findDefaultBlockExitOnOrNull(block)*/
+    block.exits.firstOrNull()
   } catch (e: Throwable) {
     e.printStackTrace()
     findDefaultBlockExitOnOrNull(block)
@@ -207,7 +207,7 @@ typealias TEvalContextBlockMap = Map<String, IEvalContextBlock>
 }*/
 
 private fun getContactContext(contact: IContact): IContact {
-  return contact.also { it.groups = it.groups.filter { group -> group.deleted_at == null } }
+  return contact.also { it.groups = it.groups.filter { group -> group.deleted_at == null }.toMutableList() }
 }
 
 // TODO: Define/Return a (FlowEvalContext: IFlow) instead of JsonObject

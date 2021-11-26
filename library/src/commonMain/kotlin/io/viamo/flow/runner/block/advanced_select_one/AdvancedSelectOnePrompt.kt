@@ -19,7 +19,7 @@ data class AdvancedSelectOnePrompt(
    * There is no validation as it's literally impossible for this to pass, as a CSV is needed in order to handle this, and the CSV
    * data never gets put into io.viamo.flow.runner.domain.FlowRunner.
    **/
-  override fun validate(value: List<AdvancedSelectOne>?): Boolean {
+  override fun validate(value: Any?): Boolean {
     return true
   }
 }

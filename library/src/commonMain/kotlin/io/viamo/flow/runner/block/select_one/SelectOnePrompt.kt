@@ -18,14 +18,13 @@ data class SelectOnePrompt(
 
   override val key = SELECT_MANY_PROMPT_KEY
 
-  override fun validate(value: String?): Boolean {
-    val isResponseRequired = config.isResponseRequired
-    val choices = config.choices
-
-    if (isResponseRequired && choices.none { it.key == value }) {
-      throw ValidationException("Value provided must be in list of choices")
+  override fun validate(value: Any?): Boolean {
+    (value as String?).let { stringVal ->
+      if (config.isResponseRequired && config.choices.none { it.key == stringVal }) {
+        throw ValidationException("Value provided must be in list of choices")
+      } else {
+        return true
+      }
     }
-
-    return true
   }
 }

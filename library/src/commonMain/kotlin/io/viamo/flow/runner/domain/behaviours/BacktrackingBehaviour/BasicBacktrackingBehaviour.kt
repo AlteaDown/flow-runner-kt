@@ -7,10 +7,7 @@ import io.viamo.flow.runner.domain.IPromptBuilder
 import io.viamo.flow.runner.domain.NON_INTERACTIVE_BLOCK_TYPES
 import io.viamo.flow.runner.domain.behaviours.IBehaviour
 import io.viamo.flow.runner.domain.prompt.BasePrompt
-import io.viamo.flow.runner.flowspec.IBlockInteraction
-import io.viamo.flow.runner.flowspec.IContext
-import io.viamo.flow.runner.flowspec.IRichCursorInputRequired
-import io.viamo.flow.runner.flowspec.findBlockWith
+import io.viamo.flow.runner.flowspec.*
 
 enum class PeekDirection {
   RIGHT,
@@ -30,7 +27,7 @@ interface IBasicBackTrackingBehaviour : IBehaviour {
    * Generates new prompt from new interaction + resets state to what was {@link io.viamo.flow.runner."flow-spec".IContext.interactions}'s moment
    * @param interaction
    * todo: this should likely take in steps rather than interaction itself */
-  fun jumpTo(interaction: IBlockInteraction): IRichCursorInputRequired
+  suspend fun jumpTo(interaction: IBlockInteraction): IRichCursor
 
   /**
    * Regenerates prompt from previous interaction
@@ -42,7 +39,7 @@ interface IBasicBackTrackingBehaviour : IBehaviour {
    * Regenerates prompt + interaction in place of previous interaction; updates {@link io.viamo.flow.runner."flow-spec".IContext.cursor}
    * @param steps
    */
-  suspend fun seek(steps: Int = 0): IRichCursorInputRequired
+  suspend fun seek(steps: Int = 0): IRichCursor
 }
 
 /**
@@ -61,7 +58,7 @@ data class BasicBacktrackingBehaviour(
     // do nothing for now
   }
 
-  override fun jumpTo(interaction: IBlockInteraction): IRichCursorInputRequired {
+  override suspend fun jumpTo(interaction: IBlockInteraction): IRichCursor {
     // jump context.interactions back in time
     val discardedBlockInteractions = context.interactions.subList(
       // truncate intx list to pull us back in time; include provided intx
@@ -87,7 +84,7 @@ data class BasicBacktrackingBehaviour(
     val destinationBlock = context.findBlockOnActiveFlowWith(interaction.block_id)
 
     jumpContext = JumpContext(discardedBlockInteractions, interaction)
-    val richCursor = navigator.navigateTo(destinationBlock, context)
+    val richCursor = navigator.navigateTo(destinationBlock)
     jumpContext = null
 
     return richCursor
@@ -124,7 +121,7 @@ data class BasicBacktrackingBehaviour(
     throw ValidationException("Logic error when backtracking.\nSkipped Interactions with No Prompt")
   }
 
-  override suspend fun seek(steps: Int): IRichCursorInputRequired {
+  override suspend fun seek(steps: Int): IRichCursor {
     // then generate a cursor from desired interaction && set cursor on context
     return jumpTo(peek(steps).interaction)
   }

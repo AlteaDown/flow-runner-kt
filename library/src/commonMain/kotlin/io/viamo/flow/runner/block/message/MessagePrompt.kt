@@ -18,7 +18,7 @@ data class MessagePrompt(
 
   override val key = MESSAGE_PROMPT_KEY
 
-  override fun validate(value: Nothing?): Boolean {
+  override fun validate(value: Any?): Boolean {
     return true
   }
 }

@@ -26,7 +26,7 @@ interface IContact {
   // TODO: was "[key: String]: IContactPropertyType", but really, properties should not be at this level. Why do properties exist at this level, but not individual Groups?
   val properties: Map<String, IContactPropertyType>
 
-  var groups: List<IContactGroup>
+  var groups: MutableList<IContactGroup>
 
   /**
    * Set a property on this contact.

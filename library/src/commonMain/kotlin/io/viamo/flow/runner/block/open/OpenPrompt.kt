@@ -19,8 +19,8 @@ data class OpenPrompt(
 ) : BasePrompt<String?> {
   override val key = OPEN_PROMPT_KEY
 
-  override fun validate(value: String?): Boolean {
-    return if (config.maxResponseCharacters != null && value != null && value.length > config.maxResponseCharacters) {
+  override fun validate(value: Any?): Boolean = (value as String?).let {
+    if (config.maxResponseCharacters != null && value != null && value.length > config.maxResponseCharacters) {
       throw ValidationException("Too many characters on value provided")
     } else {
       true

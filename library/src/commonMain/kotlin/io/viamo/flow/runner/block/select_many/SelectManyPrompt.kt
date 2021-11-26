@@ -25,23 +25,22 @@ data class SelectManyPrompt(
 
   /* TODO: This will return true, or throw an error, but it seems like it should return a false instead of throwing error.
       Consider making a validateOrThrow and a and a validate, where validate only returns true/false. */
-  override fun validate(selections: List<String>?): Boolean {
-    val isResponseRequired = config.isResponseRequired
-    val choices = config.choices
-
-    return if (!isResponseRequired) {
-      true
-    } else if (selections == null) {
-      false
-    } else if (selections.isEmpty()) {
-      throw ValidationException(INVALID_AT_LEAST_ONE_SELECTION_REQUIRED)
-    } else {
-      val invalidChoices = selections.filter { selection -> choices.none { it.key == selection } }
-      if (invalidChoices.isNotEmpty()) {
-        throw InvalidChoiceException(INVALID_ALL_SELECTIONS_MUST_EXIST_ON_BLOCK + invalidChoices)
+  override fun validate(value: Any?): Boolean {
+    return (value as List<String>?)?.let {
+      when {
+        !config.isResponseRequired -> true
+        value == null -> false
+        value.isEmpty() -> throw ValidationException(INVALID_AT_LEAST_ONE_SELECTION_REQUIRED)
+        else -> validateSelections(value)
       }
+    } ?: throw IllegalStateException("Expected a List<String>?")
+  }
 
-      true
+  private fun validateSelections(selections: List<String>): Boolean {
+    val invalidChoices = selections.filter { selection -> config.choices.none { it.key == selection } }
+    if (invalidChoices.isNotEmpty()) {
+      throw InvalidChoiceException(INVALID_ALL_SELECTIONS_MUST_EXIST_ON_BLOCK + invalidChoices)
     }
+    return true
   }
 }

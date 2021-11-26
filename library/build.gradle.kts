@@ -21,7 +21,7 @@ repositories {
 kotlin {
   kotlinJvm()
   kotlinJs()
-  kotlinNative()
+  /*kotlinNative()*/
 
   sourceSets {
     val commonMain by getting {
@@ -62,7 +62,7 @@ kotlin {
     }
     val jsTest by getting
 
-    val nativeMain by creating {
+    /*val nativeMain by creating {
       dependsOn(commonMain)
     }
 
@@ -95,7 +95,7 @@ kotlin {
 
     val macosX64Test by getting {
       dependsOn(nativeTest)
-    }
+    }*/
   }
 }
 

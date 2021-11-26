@@ -1,7 +1,5 @@
 package io.viamo.flow.runner.flowspec
 
-import io.viamo.flow.runner.block.IBlockConfig
-
 /**
  * Flow structure: https://floip.gitbook.io/flow-specification/flows#flows
  */
@@ -92,5 +90,5 @@ fun findBlockWith(uuid: String, flow: IFlow): IBlock {
 }
 
 interface IFlowService {
-  fun findBlockWith(uuid: String, flow: IFlow): IBlock<IBlockConfig>
+  fun findBlockWith(uuid: String, flow: IFlow): IBlock
 }

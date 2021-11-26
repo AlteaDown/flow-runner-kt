@@ -20,11 +20,13 @@ data class NumericPrompt(
 
   override val key = NUMERIC_PROMPT_KEY
 
-  override fun validate(value: Double?) = when {
-    value == null -> false
-    value.isNaN() -> false
-    config.min != null && value < config.min -> throw ValidationException("Value provided is less than allowed")
-    config.max != null && value > config.max -> throw ValidationException("Value provided is greater than allowed")
-    else -> true
+  override fun validate(value: Any?) = (value as Double?).let {
+    when {
+      it == null -> false
+      it.isNaN() -> false
+      config.min != null && it < config.min -> throw ValidationException("Value provided is less than allowed")
+      config.max != null && it > config.max -> throw ValidationException("Value provided is greater than allowed")
+      else -> true
+    }
   }
 }

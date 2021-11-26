@@ -1,6 +1,5 @@
 package io.viamo.flow.runner.block.output
 
-import createEvalContextFrom
 import io.viamo.flow.runner.domain.runners.IBlockRunner
 import io.viamo.flow.runner.flowspec.*
 
@@ -23,7 +22,7 @@ class OutputBlockRunner(
   override suspend fun initialize(interaction: IBlockInteraction): Nothing? = null
   override suspend fun run(cursor: IRichCursor): IBlockExit {
     return try {
-      cursor.interaction.value = evaluateToString(block.config.value, createEvalContextFrom(context))
+      cursor.interaction.value = evaluateToString(block.config.value, context /* TODO: was createEvalContextFrom(context)*/)
       cursor.interaction.has_response = true
       setContactProperty(block, context)
       firstTrueOrNullBlockExitOrThrow(block, context)

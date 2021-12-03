@@ -24,5 +24,3 @@ interface IResource {
   // each describes the resource content to use for a content_type
   val values: List<IResourceValue>
 }
-
-typealias IResources = List<IResource>

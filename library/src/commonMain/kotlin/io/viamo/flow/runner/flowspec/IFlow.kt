@@ -1,5 +1,9 @@
 package io.viamo.flow.runner.flowspec
 
+import io.viamo.flow.runner.block.IBlock
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
+
 /**
  * Flow structure: https://floip.gitbook.io/flow-specification/flows#flows
  */
@@ -82,13 +86,25 @@ interface IFlow {
    * @pattern ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
    */
   val exit_block_id: String?
+
+
+  fun findBlockWith(uuid: String): IBlock {
+    return blocks.firstOrNull { it.uuid == uuid }
+        ?: throw IllegalStateException("Unable to find block on flow")
+  }
 }
 
-fun findBlockWith(uuid: String, flow: IFlow): IBlock {
-  return flow.blocks.firstOrNull { it.uuid == uuid }
-      ?: throw IllegalStateException("Unable to find block on flow")
-}
-
-interface IFlowService {
-  fun findBlockWith(uuid: String, flow: IFlow): IBlock
-}
+@Serializable
+data class Flow(
+  override val uuid: String,
+  override val name: String,
+  override val label: String?,
+  override val last_modified: String,
+  override val interaction_timeout: Int,
+  override val vendor_metadata: JsonObject,
+  override val supported_modes: List<SupportedMode>,
+  override val languages: List<ILanguage>,
+  override val blocks: List<IBlock>,
+  override val first_block_id: String,
+  override val exit_block_id: String?
+): IFlow

@@ -2,6 +2,7 @@ package io.viamo.flow.runner.domain.prompt
 
 import PromptValidationException
 import ValidationException
+import io.viamo.flow.runner.block.IBlock
 import io.viamo.flow.runner.domain.IFlowRunner
 import io.viamo.flow.runner.flowspec.*
 
@@ -38,10 +39,8 @@ interface BasePrompt<VALUE> {
   val block
     get(): IBlock? {
       return try {
-        findBlockWith(
-          uuid = runner.context.findInteractionWith(interactionId).block_id,
-          flow = runner.context.findFlowWith(runner.context.findInteractionWith(interactionId).flow_id)
-        )
+        runner.context.findFlowWith(runner.context.findInteractionWith(interactionId).flow_id)
+          .findBlockWith(uuid = runner.context.findInteractionWith(interactionId).block_id)
       } catch (e: ValidationException) {
         e.printStackTrace()
         throw e

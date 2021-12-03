@@ -1,11 +1,10 @@
 package io.viamo.flow.runner.flowspec
 
 import ValidationException
-import io.viamo.flow.runner.block.run_flow.IRunFlowBlockConfig
+import io.viamo.flow.runner.block.IBlock
+import io.viamo.flow.runner.block.type.run_flow.IRunFlowBlockConfig
 import io.viamo.flow.runner.collections.Stack
-import io.viamo.flow.runner.domain.IIdGenerator
-import io.viamo.flow.runner.domain.IdGeneratorUuidV4
-import io.viamo.flow.runner.domain.createFormattedDate
+import io.viamo.flow.runner.flowspec.contact.IContact
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 
@@ -34,36 +33,9 @@ interface IContext {
   val cursor: ICursor?
   val flows: List<IFlow>
   val first_flow_id: String
-  val resources: IResources
+  val resources: List<IResource>
   val vendor_metadata: JsonObject
   val logs: JsonObject
-
-  suspend fun createContextDataObjectFor(
-    contact: IContact,
-    groups: List<IGroup>,
-    userId: String,
-    orgId: String,
-    flows: List<IFlow>,
-    languageId: String,
-    mode: SupportedMode = SupportedMode.OFFLINE,
-    resources: List<IResource> = emptyList(),
-    idGenerator: IIdGenerator = IdGeneratorUuidV4()
-  ): IContext {
-    return Context(
-      id = idGenerator.generate(),
-      created_at = createFormattedDate(),
-      delivery_status = DeliveryStatus.QUEUED,
-      user_id = userId,
-      org_id = orgId,
-      mode = mode,
-      language_id = languageId,
-      contact = contact,
-      groups = groups,
-      flows = flows,
-      first_flow_id = flows[0].uuid,
-      resources = resources,
-    )
-  }
 
   fun findInteractionWith(uuid: String): IBlockInteraction {
     return interactions.lastOrNull { it.uuid == uuid }
@@ -76,16 +48,15 @@ interface IContext {
   }
 
   fun findBlockOnActiveFlowWith(uuid: String): IBlock {
-    return findBlockWith(uuid, getActiveFlowFrom())
+    return getActiveFlow().findBlockWith(uuid)
   }
 
   fun findNestedFlowIdFor(interaction: IBlockInteraction): String {
-    val flow = findFlowWith(interaction.flow_id)
-    val runFlowBlock = findBlockWith(interaction.block_id, flow)
+    val runFlowBlock = findFlowWith(interaction.flow_id).findBlockWith(interaction.block_id)
     return (runFlowBlock.config as IRunFlowBlockConfig).flow_id
   }
 
-  fun getActiveFlowIdFrom(): String {
+  fun getActiveFlowId(): String {
     return if (nested_flow_block_interaction_id_stack.isEmpty()) {
       first_flow_id
     } else {
@@ -93,10 +64,10 @@ interface IContext {
     }
   }
 
-  fun getActiveFlowFrom() = findFlowWith(getActiveFlowIdFrom())
+  fun getActiveFlow() = findFlowWith(getActiveFlowId())
 
   fun isLastBlockOn(block: IBlock): Boolean {
-    return !isNested() && isLastBlock(block)
+    return !isNested() && block.isLastInFlow()
   }
 
   fun isNested(): Boolean {

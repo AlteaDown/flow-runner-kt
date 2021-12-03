@@ -7,7 +7,10 @@ import io.viamo.flow.runner.domain.IPromptBuilder
 import io.viamo.flow.runner.domain.NON_INTERACTIVE_BLOCK_TYPES
 import io.viamo.flow.runner.domain.behaviours.IBehaviour
 import io.viamo.flow.runner.domain.prompt.BasePrompt
-import io.viamo.flow.runner.flowspec.*
+import io.viamo.flow.runner.flowspec.IBlockInteraction
+import io.viamo.flow.runner.flowspec.IContext
+import io.viamo.flow.runner.flowspec.IRichCursor
+import io.viamo.flow.runner.flowspec.IRichCursorInputRequired
 
 enum class PeekDirection {
   RIGHT,
@@ -101,7 +104,7 @@ data class BasicBacktrackingBehaviour(
       try {
         // attempt to build a prompt from the next interaction
         val intx = _findInteractiveInteractionAt(localSteps, context, direction)
-        val block = findBlockWith(intx.block_id, context.findFlowWith(intx.flow_id))
+        val block = context.findFlowWith(intx.flow_id).findBlockWith(intx.block_id)
         prompt = promptBuilder.buildPromptFor(block, intx)
 
         if (prompt != null) {

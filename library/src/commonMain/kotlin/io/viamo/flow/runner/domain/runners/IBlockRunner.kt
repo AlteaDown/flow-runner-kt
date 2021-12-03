@@ -1,7 +1,11 @@
 package io.viamo.flow.runner.domain.runners
 
+import io.viamo.flow.runner.block.IBlock
+import io.viamo.flow.runner.block.IBlockExit
 import io.viamo.flow.runner.domain.prompt.IPromptConfig
-import io.viamo.flow.runner.flowspec.*
+import io.viamo.flow.runner.flowspec.IBlockInteraction
+import io.viamo.flow.runner.flowspec.IContext
+import io.viamo.flow.runner.flowspec.IRichCursor
 
 /**
  * Interface for running a new block type.

@@ -1,17 +1,17 @@
 package io.viamo.flow.runner.domain
 
+import io.viamo.flow.runner.block.IBlock
 import io.viamo.flow.runner.domain.runners.IBlockRunner
-import io.viamo.flow.runner.flowspec.*
+import io.viamo.flow.runner.flowspec.Context
+import io.viamo.flow.runner.flowspec.IContext
+import io.viamo.flow.runner.flowspec.IRichCursor
+import io.viamo.flow.runner.flowspec.IRichCursorInputRequired
 
 typealias TBlockRunnerFactory = (block: IBlock, ctx: Context) -> IBlockRunner<*>
-
-typealias IBlockRunnerFactoryStore = Map<String, TBlockRunnerFactory>
 
 interface IFlowRunner {
   val context: IContext
   val runnerFactoryStore: Map<String, TBlockRunnerFactory>
-
-  // new (context: io.viamo.flow.runner."flow-spec".IContext): io.viamo.flow.runner.domain.IFlowRunner
 
   suspend fun initialize(): IRichCursor?
 

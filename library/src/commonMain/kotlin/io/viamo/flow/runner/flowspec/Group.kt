@@ -1,6 +1,7 @@
 package io.viamo.flow.runner.flowspec
 
 import io.viamo.flow.runner.domain.createFormattedDate
+import io.viamo.flow.runner.flowspec.contact.IContactGroup
 import kotlinx.serialization.Serializable
 
 @Serializable

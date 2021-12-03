@@ -7,7 +7,6 @@ plugins {
   kotlin("multiplatform") version "1.6.0"
   kotlin("plugin.serialization") version "1.6.0"
   application
-  // kotlin("jvm") version "1.6.0"
 }
 
 group = "io.viamo"
@@ -30,6 +29,9 @@ kotlin {
         implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.1")
         implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.3.1")
         implementation("com.benasher44:uuid:0.3.1")
+
+
+        // TODO: use this for JS/JVM multiplatform once cashapp/square team releases next update: implementation("app.cash.zipline:zipline:0.1.0")
       }
     }
     val commonTest by getting {
@@ -47,8 +49,8 @@ kotlin {
         implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
       }
     }
-
     val jvmTest by getting
+
     val jsMain by getting {
       dependencies {
         implementation("org.jetbrains.kotlinx:kotlinx-nodejs:0.0.7")
@@ -158,7 +160,7 @@ fun KotlinMultiplatformExtension.kotlinJs() {
 
 
 application {
-  mainClass.set("ServerKt")
+  mainClass.set("io.viamo.flow.runner.ServerKt")
 }
 
 tasks.named<Copy>("jvmProcessResources") {

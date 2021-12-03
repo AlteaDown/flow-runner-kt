@@ -1,8 +1,8 @@
 package io.viamo.flow.runner.domain.prompt
 
 import PromptValidationException
+import io.viamo.flow.runner.block.IBlock
 import io.viamo.flow.runner.domain.IFlowRunner
-import io.viamo.flow.runner.flowspec.IBlock
 import io.viamo.flow.runner.flowspec.IRichCursorInputRequired
 
 /**

@@ -2,31 +2,33 @@ package io.viamo.flow.runner.domain
 
 import Prompt
 import ValidationException
-import io.viamo.flow.runner.block.log.ILogBlock
-import io.viamo.flow.runner.block.log.LogBlockRunner
-import io.viamo.flow.runner.block.message.IMessageBlock
-import io.viamo.flow.runner.block.message.MessageBlockRunner
-import io.viamo.flow.runner.block.numeric.INumericResponseBlock
-import io.viamo.flow.runner.block.numeric.NumericResponseBlockRunner
-import io.viamo.flow.runner.block.open.IOpenResponseBlock
-import io.viamo.flow.runner.block.open.OpenResponseBlockRunner
-import io.viamo.flow.runner.block.output.IOutputBlock
-import io.viamo.flow.runner.block.output.OutputBlockRunner
-import io.viamo.flow.runner.block.print.IPrintBlock
-import io.viamo.flow.runner.block.print.PrintBlockRunner
-import io.viamo.flow.runner.block.run_flow.IRunFlowBlock
-import io.viamo.flow.runner.block.run_flow.RunFlowBlockRunner
-import io.viamo.flow.runner.block.select_many.ISelectManyResponseBlock
-import io.viamo.flow.runner.block.select_many.SelectManyResponseBlockRunner
-import io.viamo.flow.runner.block.select_one.ISelectOneResponseBlock
-import io.viamo.flow.runner.block.select_one.SelectOneResponseBlockRunner
-import io.viamo.flow.runner.block.selectcase.CaseBlockRunner
-import io.viamo.flow.runner.block.selectcase.ICaseBlock
-import io.viamo.flow.runner.block.set_group_membership.ISetGroupMembershipBlock
-import io.viamo.flow.runner.block.set_group_membership.SET_GROUP_MEMBERSHIP_BLOCK_TYPE
-import io.viamo.flow.runner.block.set_group_membership.SetGroupMembershipBlockRunner
+import io.viamo.flow.runner.block.IBlock
+import io.viamo.flow.runner.block.IBlockExit
+import io.viamo.flow.runner.block.type.log.ILogBlock
+import io.viamo.flow.runner.block.type.log.LogBlockRunner
+import io.viamo.flow.runner.block.type.message.IMessageBlock
+import io.viamo.flow.runner.block.type.message.MessageBlockRunner
+import io.viamo.flow.runner.block.type.numeric.INumericResponseBlock
+import io.viamo.flow.runner.block.type.numeric.NumericResponseBlockRunner
+import io.viamo.flow.runner.block.type.open.IOpenResponseBlock
+import io.viamo.flow.runner.block.type.open.OpenResponseBlockRunner
+import io.viamo.flow.runner.block.type.output.IOutputBlock
+import io.viamo.flow.runner.block.type.output.OutputBlockRunner
+import io.viamo.flow.runner.block.type.print.IPrintBlock
+import io.viamo.flow.runner.block.type.print.PrintBlockRunner
+import io.viamo.flow.runner.block.type.run_flow.IRunFlowBlock
+import io.viamo.flow.runner.block.type.run_flow.RunFlowBlock
+import io.viamo.flow.runner.block.type.run_flow.RunFlowBlockRunner
+import io.viamo.flow.runner.block.type.select_many.ISelectManyResponseBlock
+import io.viamo.flow.runner.block.type.select_many.SelectManyResponseBlockRunner
+import io.viamo.flow.runner.block.type.select_one.ISelectOneResponseBlock
+import io.viamo.flow.runner.block.type.select_one.SelectOneResponseBlockRunner
+import io.viamo.flow.runner.block.type.selectcase.CaseBlockRunner
+import io.viamo.flow.runner.block.type.selectcase.ICaseBlock
+import io.viamo.flow.runner.block.type.set_group_membership.ISetGroupMembershipBlock
+import io.viamo.flow.runner.block.type.set_group_membership.SET_GROUP_MEMBERSHIP_BLOCK_TYPE
+import io.viamo.flow.runner.block.type.set_group_membership.SetGroupMembershipBlockRunner
 import io.viamo.flow.runner.collections.pop
-import io.viamo.flow.runner.collections.push
 import io.viamo.flow.runner.domain.behaviours.BacktrackingBehaviour.BasicBacktrackingBehaviour
 import io.viamo.flow.runner.domain.behaviours.BehaviourConstructor
 import io.viamo.flow.runner.domain.behaviours.IBehaviour
@@ -48,7 +50,7 @@ interface IPromptBuilder {
   suspend fun buildPromptFor(block: IBlock, interaction: IBlockInteraction): BasePrompt<*>?
 }
 
-val DEFAULT_BEHAVIOUR_TYPES: List<IBehaviourConstructor> = listOf(
+val DEFAULT_BEHAVIOUR_TYPES = listOf(
   BehaviourConstructor(
     name = "BasicBacktrackingBehaviour",
     new = { context, navigator, promptBuilder -> BasicBacktrackingBehaviour(context, navigator, promptBuilder) }
@@ -63,7 +65,7 @@ val NON_INTERACTIVE_BLOCK_TYPES = listOf("Core.Case", "Core.RunFlow")
 /**
  * A map of "io.viamo.flow.runner."flow-spec".IBlock.type" to an "TBlockRunnerFactory" function.
  */
-fun createDefaultBlockRunnerStore(): IBlockRunnerFactoryStore = mapOf(
+fun createDefaultBlockRunnerStore(): Map<String, TBlockRunnerFactory> = mapOf(
   "MobilePrimitives.Message" to { block, context -> MessageBlockRunner(block as IMessageBlock, context) },
   "MobilePrimitives.OpenResponse" to { block, context -> OpenResponseBlockRunner(block as IOpenResponseBlock, context) },
   "MobilePrimitives.NumericResponse" to { block, context -> NumericResponseBlockRunner(block as INumericResponseBlock, context) },
@@ -85,7 +87,7 @@ data class FlowRunner(
   /** Running context, JSON-serializable entity with enough information to start or resume a Flow. */
   override var context: Context,
   /** Map of block types to a factory producting an io.viamo.flow.runner.domain.runners.IBlockRunner instnace. */
-  override val runnerFactoryStore: IBlockRunnerFactoryStore = createDefaultBlockRunnerStore(),
+  override val runnerFactoryStore: Map<String, TBlockRunnerFactory> = createDefaultBlockRunnerStore(),
   /** Instance used to "generate()" unique IDs across interaction history. */
   val idGenerator: IIdGenerator = IdGeneratorUuidV4(),
   /** Instances providing isolated functionality beyond the default runner, leveraging built-in hooks. */
@@ -164,7 +166,7 @@ data class FlowRunner(
       initialize()
     }
 
-    return runUntilInputRequiredFrom(context as IContextWithCursor)
+    return runUntilInputRequiredFrom()
   }
 
   /**
@@ -258,7 +260,7 @@ data class FlowRunner(
    * Typically called internally.
    * @param ctx
    */
-  suspend fun runUntilInputRequiredFrom(ctx: IContextWithCursor): IRichCursorInputRequired? {
+  suspend fun runUntilInputRequiredFrom(): IRichCursorInputRequired? {
     var richCursor: IRichCursor = hydrateRichCursorFrom()
 
     do {
@@ -280,7 +282,9 @@ data class FlowRunner(
         continue
       }
 
-      if (block.type == "Core.RunFlow") {
+      if (block.getType() == "Core.RunFlow") {
+        check(block is RunFlowBlock)
+
         richCursor = navigateTo(block)
         block = stepInto(block)
       }
@@ -399,7 +403,7 @@ data class FlowRunner(
     originBlockInteractionId: String?,
     createPrompt: suspend IBlockInteraction.() -> BasePrompt<*>?
   ): IRichCursor {
-    var interaction = createBlockInteractionFor(block, flowId, originFlowId, originBlockInteractionId)
+    var interaction = BlockInteraction.createBlockInteractionFor(block, flowId, originFlowId, originBlockInteractionId, idGenerator)
     interaction = behaviours.values.fold(interaction) { blockInteraction, behaviour -> (behaviour.postInteractionCreate(blockInteraction)) }
 
     return RichCursor(interaction, interaction.createPrompt())
@@ -453,7 +457,7 @@ data class FlowRunner(
    * @param ctx
    */
   fun createBlockRunnerFor(block: IBlock): IBlockRunner<*> {
-    val factory = runnerFactoryStore[block.type] ?: throw ValidationException("Unable to find factory for block type: ${block.type}")
+    val factory = runnerFactoryStore[block.getType()] ?: throw ValidationException("Unable to find factory for block type: ${block.getType()}")
 
     return factory(block, context)
   }
@@ -482,7 +486,7 @@ data class FlowRunner(
 
     val richCursor = initializeOneBlockInteraction(
       block,
-      context.getActiveFlowIdFrom(),
+      context.getActiveFlowId(),
       context.findInteractionWith(originInteractionId).flow_id,
       originInteractionId,
     ) { buildPromptFor(block, this) }
@@ -516,24 +520,7 @@ data class FlowRunner(
    *
    * todo: would it be possible for stepping into and out of be handled by the RunFlow itself?
    *       Eg. these are esentially RunFlowRunner's .start() + .resume() equivalents */
-  fun stepInto(runFlowBlock: IBlock): IBlock? {
-    if (runFlowBlock.type != "Core.RunFlow") {
-      throw ValidationException("Unable to step into a non-Core.RunFlow block type")
-    }
-
-    val runFlowInteraction = context.interactions.lastOrNull()
-        ?: throw ValidationException("Unable to step into Core.RunFlow that hasn't yet been started")
-
-    if (runFlowBlock.uuid != runFlowInteraction.block_id) {
-      throw ValidationException("Unable to step into Core.RunFlow block that doesn't match last interaction")
-    }
-
-    context.nested_flow_block_interaction_id_stack.push(runFlowInteraction.uuid)
-
-    val firstNestedBlock = context.getActiveFlowFrom().blocks.first()
-    // todo: use io.viamo.flow.runner."flow-spec".IFlow.firstBlockId
-    return firstNestedBlock
-  }
+  fun stepInto(runFlowBlock: RunFlowBlock) = runFlowBlock.stepIntoAndGetNextBlock(this.context)
 
   fun findFirstExitOnActiveFlowBlockFor(blockInteraction: IBlockInteraction): IBlockExit {
     val exits = (context.findBlockOnActiveFlowWith(blockInteraction.block_id)).exits
@@ -546,7 +533,7 @@ data class FlowRunner(
    * @param ctx
    */
   fun findNextBlockOnActiveFlowFor(): IBlock? {
-    val flow = context.getActiveFlowFrom()
+    val flow = context.getActiveFlow()
     val cursor = (context).cursor
         ?: return flow.blocks.first()
 
@@ -564,47 +551,11 @@ data class FlowRunner(
   fun findNextBlockFrom(blockInteraction: IBlockInteraction): IBlock {
     return blockInteraction.selected_exit_id?.let { selected_exit_id: String ->
       val block = context.findBlockOnActiveFlowWith(blockInteraction.block_id)
-      val destination_block = (findBlockExitWith(selected_exit_id, block)).destination_block
-      val blocks = (context.getActiveFlowFrom()).blocks
+      val destination_block = (block.findBlockExitWith(selected_exit_id)).destination_block
+      val blocks = (context.getActiveFlow()).blocks
 
       blocks.find { it.uuid == destination_block }
     } ?: throw ValidationException("Unable to navigate past incomplete interaction; did you forget to call runner.run()?")
-  }
-
-  /**
-   * Generate a concrete "io.viamo.flow.runner."flow-spec".IBlockInteraction" data object, pre-populated with:
-   * - UUID via "io.viamo.flow.runner.domain.IIdGenerator.generate()"
-   * - entryAt via current timestamp
-   * - flowId (provisioned)
-   * - block_id via block.uuid
-   * - type via block.type provisioned
-   * - hasResponse as "false"
-   * @param block_id
-   * @param type
-   * @param flowId
-   * @param originFlowId
-   * @param originBlockInteractionId
-   */
-  private suspend fun createBlockInteractionFor(
-    block: IBlock,
-    flowId: String,
-    originFlowId: String?,
-    originBlockInteractionId: String?
-  ): IBlockInteraction {
-    return BlockInteraction(
-      uuid = idGenerator.generate(),
-      block_id = block.uuid,
-      flow_id = flowId,
-      entry_at = createFormattedDate(),
-      exit_at = null,
-      has_response = false,
-      value = null,
-      selected_exit_id = null,
-      origin_flow_id = originFlowId,
-      origin_block_interaction_id = originBlockInteractionId,
-      type = block.type,
-      details = mapOf()
-    )
   }
 
   suspend fun _inflatePromptForBlockOnto(
@@ -641,4 +592,3 @@ data class FlowRunner(
     }
   }
 }
-

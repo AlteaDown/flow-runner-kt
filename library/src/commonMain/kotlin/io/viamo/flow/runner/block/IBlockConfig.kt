@@ -10,6 +10,8 @@ interface SetContactProperty {
  * This update shall happen immediately prior to following the exit node out of the block.
  * This is specified via the optional set_contact_property object within the Block config
  */
-interface IBlockConfig : Map<String, Any> {
+interface IBlockConfig
+
+interface IBlockConfigContactEditable : IBlockConfig {
   val set_contact_property: SetContactProperty?
 }

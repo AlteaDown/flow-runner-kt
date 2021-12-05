@@ -1,6 +1,6 @@
 package io.viamo.flow.runner.ext
 
-import io.viamo.flow.runner.block.BlockSerializerModule
+import io.viamo.flow.runner.flowspec.FloipSerializer
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 
@@ -13,7 +13,7 @@ fun Number?.toJsonPrimitive() = JsonPrimitive(this)
 fun Boolean?.toJsonPrimitive() = JsonPrimitive(this)
 
 val JSON = Json {
-  serializersModule = BlockSerializerModule.module
+  serializersModule = FloipSerializer.module
 }
 
 /** Converts a Map to a JsonObject, including all values, recursively */

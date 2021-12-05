@@ -9,7 +9,7 @@ class ResourceResolver(override val context: IContext) : IResourceResolver {
     val language_id = this.context.language_id
 
     if (!isUUID(resourceId)) {
-      return Resource(resourceId, listOf(createTextResourceVariantWith(resourceId, this.context)), this.context)
+      return io.viamo.flow.runner.flowspec.Resource(resourceId, listOf(createTextResourceVariantWith(resourceId, this.context)), this.context)
     }
 
     val resource = this.context.resources.firstOrNull { it.uuid == resourceId }
@@ -17,7 +17,7 @@ class ResourceResolver(override val context: IContext) : IResourceResolver {
 
     val values = resource.values.filter { it.language_id == language_id && it.modes.intersect(mode).isNotEmpty() }
 
-    return Resource(resourceId, values, this.context)
+    return io.viamo.flow.runner.flowspec.Resource(resourceId, values, this.context)
   }
 }*/
 

@@ -28,17 +28,19 @@ kotlin {
         implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.1")
         implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.1")
         implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.3.1")
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinVersion-RC")
         implementation("com.benasher44:uuid:0.3.1")
-
-
         // TODO: use this for JS/JVM multiplatform once cashapp/square team releases next update: implementation("app.cash.zipline:zipline:0.1.0")
       }
     }
     val commonTest by getting {
       dependencies {
         implementation(kotlin("test"))
+
         //implementation("io.ktor:ktor-server-tests:1.5.2")
-        implementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.0-RC")
+
+       // implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$kotlinVersion-RC")
       }
     }
 

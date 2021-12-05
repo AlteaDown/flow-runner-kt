@@ -2,9 +2,10 @@ package io.viamo.flow.runner.domain.prompt
 
 import PromptValidationException
 import ValidationException
-import io.viamo.flow.runner.block.IBlock
 import io.viamo.flow.runner.domain.IFlowRunner
+import io.viamo.flow.runner.domain.IRichCursorInputRequired
 import io.viamo.flow.runner.flowspec.*
+import io.viamo.flow.runner.flowspec.block.IBlock
 
 /**
  * Abstract implementation of {@link io.viamo.flow.runner.domain.prompt.IPrompt}, intended to be consumed as a common parent for concrete {@link io.viamo.flow.runner.domain.prompt.IPrompt}

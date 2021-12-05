@@ -1,11 +1,9 @@
 package io.viamo.flow.runner.domain
 
-import io.viamo.flow.runner.block.IBlock
 import io.viamo.flow.runner.domain.runners.IBlockRunner
 import io.viamo.flow.runner.flowspec.Context
 import io.viamo.flow.runner.flowspec.IContext
-import io.viamo.flow.runner.flowspec.IRichCursor
-import io.viamo.flow.runner.flowspec.IRichCursorInputRequired
+import io.viamo.flow.runner.flowspec.block.IBlock
 
 typealias TBlockRunnerFactory = (block: IBlock, ctx: Context) -> IBlockRunner<*>
 

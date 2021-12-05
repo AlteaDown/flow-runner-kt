@@ -2,37 +2,33 @@ package io.viamo.flow.runner.domain
 
 import SupportedContentType
 import SupportedContentType.TEXT
-import io.viamo.flow.runner.flowspec.IContext
-import io.viamo.flow.runner.flowspec.IResource
-import io.viamo.flow.runner.flowspec.IResourceValue
-import io.viamo.flow.runner.flowspec.ResourceValue
+import io.viamo.flow.runner.flowspec.*
 
 /**
- * Resource definition: https://floip.gitbook.io/flow-specification/flows#resources
+ * io.viamo.flow.runner.flowspec.Resource definition: https://floip.gitbook.io/flow-specification/flows#resources
  *
  * Basically, a smarter version of an io.viamo.flow.runner."flow-spec".IResource with
  * her values having been filtered by (languageId, modes). */
 interface IResourceWithContext : IResource {
   override val uuid: String
   override val values: List<IResourceValue>
-  val context: IContext
 
-  fun getText(): String
+  fun getText(context: Context): String
   fun hasText(): Boolean
 
-  fun getAudio(): String
+  fun getAudio(context: Context): String
   fun hasAudio(): Boolean
 
-  fun getImage(): String
+  fun getImage(context: Context): String
   fun hasImage(): Boolean
 
-  fun getVideo(): String
+  fun getVideo(context: Context): String
   fun hasVideo(): Boolean
 
-  fun getCsv(): String
+  fun getCsv(context: Context): String
   fun hasCsv(): Boolean
 
-  fun get(key: SupportedContentType): String
+  fun get(context: Context, key: SupportedContentType): String
   fun has(key: SupportedContentType): Boolean
 }
 

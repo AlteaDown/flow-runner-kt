@@ -1,24 +1,41 @@
 package io.viamo.flow.runner.flowspec.contact
 
 import io.viamo.flow.runner.flowspec.IGroup
+import kotlinx.datetime.Instant
+import kotlinx.serialization.Serializable
 
 typealias ContactGroupResolver = ((group: IGroup) -> Unit)
 
+@Serializable
 /** Handles the mutliple types that a contact property can be, even though some are primitives.*/
-sealed interface IContactPropertyType {
-  sealed interface IContactPropertySealed : IContactProperty, IContactPropertyType
-  sealed interface ContactPropertyResolver : IContactPropertyType {
-    fun resolve(args: List<String>): IContactProperty?
+sealed class ContactPropertyType {
+  @Serializable
+  data class ContactProperty(
+    override val contact_property_field_name: String,
+    override val created_at: Instant,
+    override val updated_at: Instant,
+    override val value: String?,
+    override val deleted_at: Instant? = null,
+  ) : ContactPropertyType(), IContactProperty {
+    override val __value__: String? = value
   }
 
-  sealed interface ContactGroupListSealed : List<IContactGroup>, IContactPropertyType
-  sealed interface ContactGroupResolver : IContactPropertyType {
-    fun resolve(args: List<String>): IGroup?
+  @Serializable
+  sealed class ContactPropertyResolver : ContactPropertyType() {
+    abstract fun resolve(args: List<String>): IContactProperty?
   }
 
-  data class ContactString(val content: String) : IContactPropertyType
+  @Serializable
+  sealed class ContactGroupListSealed : ContactPropertyType(), List<IContactGroup>
 
-  val IContactPropertyType.string: String
+  @Serializable
+  sealed class ContactGroupResolver : ContactPropertyType() {
+    abstract fun resolve(args: List<String>): IGroup?
+  }
+
+  data class ContactString(val content: String) : ContactPropertyType()
+
+  val ContactPropertyType.string: String
     get() = if ((this is ContactString)) this.content else error("JsonPrimitive")
 }
 
@@ -26,9 +43,9 @@ interface IContact {
   val id: String
 
   // TODO: was "[key: String]: IContactPropertyType", but really, properties should not be at this level. Why do properties exist at this level, but not individual Groups?
-  val properties: Map<String, IContactPropertyType>
+  val properties: Map<String, ContactPropertyType>
 
-  var groups: MutableList<IContactGroup>
+  val groups: List<IContactGroup>
 
   /**
    * Set a property on this contact.

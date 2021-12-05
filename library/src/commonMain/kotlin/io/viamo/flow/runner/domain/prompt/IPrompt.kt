@@ -1,9 +1,10 @@
 package io.viamo.flow.runner.domain.prompt
 
 import PromptValidationException
-import io.viamo.flow.runner.block.IBlock
 import io.viamo.flow.runner.domain.IFlowRunner
-import io.viamo.flow.runner.flowspec.IRichCursorInputRequired
+import io.viamo.flow.runner.domain.IRichCursorInputRequired
+import io.viamo.flow.runner.flowspec.block.IBlock
+import kotlinx.serialization.Contextual
 
 /**
  * Primary interface for interacting with an {@link io.viamo.flow.runner."flow-spec".IContact}; typically not immplemented fully, it is recommended that
@@ -42,3 +43,5 @@ interface IPromptConfig<VALUE> : IBasePromptConfig {
 interface IBasePromptConfig {
   var isSubmitted: Boolean?
 }
+
+abstract class PromptConfig<VALUE> : IPromptConfig<@Contextual VALUE>

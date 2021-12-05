@@ -1,22 +1,22 @@
 package io.viamo.flow.runner.flowspec.contact
 
-import io.viamo.flow.runner.block.SetContactProperty
-import io.viamo.flow.runner.block.evaluateToString
 import io.viamo.flow.runner.domain.createFormattedDate
 import io.viamo.flow.runner.flowspec.ContactGroup
 import io.viamo.flow.runner.flowspec.IContext
 import io.viamo.flow.runner.flowspec.IGroup
+import io.viamo.flow.runner.flowspec.block.SetContactProperty
+import io.viamo.flow.runner.flowspec.block.evaluateToString
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class Contact(
   override val id: String,
-  override val properties: MutableMap<String, IContactPropertyType>,
-  override var groups: MutableList<IContactGroup> = mutableListOf()
+  override val properties: MutableMap<String, ContactPropertyType>,
+  override var groups: MutableList<ContactGroup> = mutableListOf()
 ) : IContact {
 
   override fun setProperty(name: String, value: String?): IContactProperty {
-    return ContactProperty(
+    return ContactPropertyType.ContactProperty(
       value = value,
       contact_property_field_name = name,
       created_at = createFormattedDate(),
@@ -35,7 +35,7 @@ data class Contact(
   override fun addGroup(group: IGroup) {
     val existingGroup = groups.find { it.group_key == group.group_key }
     if (existingGroup == null) {
-      groups.add(ContactGroup(group))
+      groups.add(ContactGroup(group, updated_at = createFormattedDate()))
     } else {
       existingGroup.updated_at = createFormattedDate()
       existingGroup.deleted_at = null

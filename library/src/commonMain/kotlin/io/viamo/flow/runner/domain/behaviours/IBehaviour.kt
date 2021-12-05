@@ -2,26 +2,27 @@ package io.viamo.flow.runner.domain.behaviours
 
 import io.viamo.flow.runner.domain.IFlowNavigator
 import io.viamo.flow.runner.domain.IPromptBuilder
+import io.viamo.flow.runner.flowspec.BlockInteraction
+import io.viamo.flow.runner.flowspec.Context
 import io.viamo.flow.runner.flowspec.IBlockInteraction
-import io.viamo.flow.runner.flowspec.IContext
 
 interface IBehaviourConstructor {
   val name: String
-  val new: (context: IContext, navigator: IFlowNavigator, promptBuilder: IPromptBuilder) -> IBehaviour
+  val new: (context: Context, navigator: IFlowNavigator, promptBuilder: IPromptBuilder) -> IBehaviour
 
   fun getNameAsKey() = name.removeSuffix("Behaviour").removeSuffix("Behavior").replaceFirstChar { it.lowercase() }
 }
 
 data class BehaviourConstructor(
   override val name: String,
-  override val new: (context: IContext, navigator: IFlowNavigator, promptBuilder: IPromptBuilder) -> IBehaviour,
+  override val new: (context: Context, navigator: IFlowNavigator, promptBuilder: IPromptBuilder) -> IBehaviour,
 ) : IBehaviourConstructor
 
 /**
  * Inteface for {@link io.viamo.flow.runner.domain.FlowRunner} extensibility; provides hooks into core runner behaviour.
  */
 interface IBehaviour {
-  val context: IContext
+  val context: Context
   val navigator: IFlowNavigator
   val promptBuilder: IPromptBuilder
 
@@ -35,7 +36,7 @@ interface IBehaviour {
    * @param interaction
    * @param context
    */
-  fun postInteractionCreate(interaction: IBlockInteraction): IBlockInteraction
+  fun postInteractionCreate(interaction: BlockInteraction): BlockInteraction
 
   /**
    * {@link io.viamo.flow.runner.domain.FlowRunner} hook:

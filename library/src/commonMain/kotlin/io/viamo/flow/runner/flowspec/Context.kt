@@ -1,11 +1,13 @@
 package io.viamo.flow.runner.flowspec
 
-import Resource
+import ValidationException
 import io.viamo.flow.runner.collections.Stack
-import io.viamo.flow.runner.domain.IIdGenerator
-import io.viamo.flow.runner.domain.IdGeneratorUuidV4
-import io.viamo.flow.runner.domain.createFormattedDate
+import io.viamo.flow.runner.domain.*
+import io.viamo.flow.runner.flowspec.block.IBlock
+import io.viamo.flow.runner.flowspec.block.type.run_flow.IRunFlowBlockConfig
 import io.viamo.flow.runner.flowspec.contact.Contact
+import io.viamo.flow.runner.flowspec.contact.IContact
+import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -13,24 +15,24 @@ import kotlinx.serialization.json.JsonObject
 @Serializable
 data class Context(
   override val id: String,
-  override val created_at: String,
+  override val created_at: Instant,
   override var delivery_status: DeliveryStatus,
   override val mode: SupportedMode,
   override val language_id: String,
   override val contact: Contact,
   override val groups: List<Group>,
   override val session_vars: MutableMap<String, JsonElement> = mutableMapOf(),
-  override val interactions: MutableList<IBlockInteraction> = mutableListOf(),
+  override val interactions: MutableList<BlockInteraction> = mutableListOf(),
   override val nested_flow_block_interaction_id_stack: Stack<String> = mutableListOf(),
   override val reversible_operations: MutableList<IReversibleUpdateOperation> = mutableListOf(),
   override val flows: List<Flow>,
   override val first_flow_id: String,
   override val resources: List<Resource>,
-  override var entry_at: String? = null,
-  override var exit_at: String? = null,
+  override var entry_at: Instant? = null,
+  override var exit_at: Instant? = null,
   override val user_id: String? = null,
   override val org_id: String? = null,
-  override var cursor: ICursor? = null,
+  override var cursor: Cursor? = null,
   override val vendor_metadata: JsonObject = JsonObject(emptyMap()),
   override val logs: JsonObject = JsonObject(emptyMap())
 ) : IContext {
@@ -61,4 +63,79 @@ data class Context(
       resources = resources,
     )
   }
+}
+
+interface IReversibleUpdateOperation {
+  val interactionId: String?
+  val forward:/* TODO Was NonBreakingUpdateOperation */ Any
+  val reverse: /* TODO Was NonBreakingUpdateOperation */ Any
+}
+
+interface IContext {
+  val id: String
+  val created_at: Instant
+  val entry_at: Instant?
+  var exit_at: Instant?
+  var delivery_status: DeliveryStatus
+  val user_id: String?
+  val org_id: String?
+  val mode: SupportedMode
+  val language_id: String
+  val contact: IContact
+  val groups: List<IGroup>
+  val session_vars: MutableMap<String, JsonElement>
+  val interactions: List<BlockInteraction>
+  val nested_flow_block_interaction_id_stack: Stack<String>
+  val reversible_operations: List<IReversibleUpdateOperation>
+  val cursor: ICursor?
+  val flows: List<IFlow>
+  val first_flow_id: String
+  val resources: List<IResource>
+  val vendor_metadata: JsonObject
+  val logs: JsonObject
+
+  fun findInteractionWith(uuid: String): BlockInteraction {
+    return interactions.lastOrNull { it.uuid == uuid }
+        ?: throw ValidationException("Unable to find interaction on context: $uuid in [${interactions.map { it.uuid }}]")
+  }
+
+  fun findFlowWith(uuid: String): IFlow {
+    return flows.find { it.uuid == uuid }
+        ?: throw ValidationException("Unable to find flow on context: $uuid in ${flows.map { it.uuid }}")
+  }
+
+  fun findBlockOnActiveFlowWith(uuid: String): IBlock {
+    return getActiveFlow().findBlockWith(uuid)
+  }
+
+  fun findNestedFlowIdFor(interaction: IBlockInteraction): String {
+    val runFlowBlock = findFlowWith(interaction.flow_id).findBlockWith(interaction.block_id)
+    return (runFlowBlock.config as IRunFlowBlockConfig).flow_id
+  }
+
+  fun getActiveFlowId(): String {
+    return if (nested_flow_block_interaction_id_stack.isEmpty()) {
+      first_flow_id
+    } else {
+      findNestedFlowIdFor(findInteractionWith(nested_flow_block_interaction_id_stack.last()))
+    }
+  }
+
+  fun getActiveFlow() = findFlowWith(getActiveFlowId())
+
+  fun isLastBlockOn(block: IBlock): Boolean {
+    return !isNested() && block.isLastInFlow()
+  }
+
+  fun isNested(): Boolean {
+    return nested_flow_block_interaction_id_stack.isNotEmpty()
+  }
+}
+
+interface IContextWithCursor : IContext {
+  override var cursor: ICursor
+}
+
+interface IContextInputRequired : IContext {
+  override val cursor: ICursorInputRequired
 }

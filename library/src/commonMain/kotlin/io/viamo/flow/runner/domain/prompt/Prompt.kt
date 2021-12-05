@@ -1,16 +1,18 @@
-import io.viamo.flow.runner.block.type.message.MESSAGE_PROMPT_KEY
-import io.viamo.flow.runner.block.type.message.MessagePrompt
-import io.viamo.flow.runner.block.type.message.MessagePromptConfig
-import io.viamo.flow.runner.block.type.numeric.NUMERIC_PROMPT_KEY
-import io.viamo.flow.runner.block.type.numeric.NumericPrompt
-import io.viamo.flow.runner.block.type.numeric.NumericPromptConfig
-import io.viamo.flow.runner.block.type.open.OPEN_PROMPT_KEY
-import io.viamo.flow.runner.block.type.select_many.SelectManyPrompt
-import io.viamo.flow.runner.block.type.select_many.SelectManyPromptConfig
-import io.viamo.flow.runner.block.type.select_one.SelectOnePromptConfig
 import io.viamo.flow.runner.domain.IFlowRunner
 import io.viamo.flow.runner.domain.prompt.BasePrompt
 import io.viamo.flow.runner.domain.prompt.IPromptConfig
+import io.viamo.flow.runner.flowspec.block.type.message.MESSAGE_PROMPT_KEY
+import io.viamo.flow.runner.flowspec.block.type.message.MessagePrompt
+import io.viamo.flow.runner.flowspec.block.type.message.MessagePromptConfig
+import io.viamo.flow.runner.flowspec.block.type.numeric.NUMERIC_PROMPT_KEY
+import io.viamo.flow.runner.flowspec.block.type.numeric.NumericPrompt
+import io.viamo.flow.runner.flowspec.block.type.numeric.NumericPromptConfig
+import io.viamo.flow.runner.flowspec.block.type.open.OPEN_PROMPT_KEY
+import io.viamo.flow.runner.flowspec.block.type.select_many.SelectManyPrompt
+import io.viamo.flow.runner.flowspec.block.type.select_many.SelectManyPromptConfig
+import io.viamo.flow.runner.flowspec.block.type.select_one.SELECT_ONE_PROMPT_KEY
+import io.viamo.flow.runner.flowspec.block.type.select_one.SelectOnePrompt
+import io.viamo.flow.runner.flowspec.block.type.select_one.SelectOnePromptConfig
 
 interface IPromptFactory<T> where T : IPromptConfig<T> {
   fun create()

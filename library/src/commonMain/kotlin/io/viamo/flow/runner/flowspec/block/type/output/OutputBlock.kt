@@ -3,15 +3,18 @@ package io.viamo.flow.runner.flowspec.block.type.output
 import io.viamo.flow.runner.flowspec.block.BlockContactEditable
 import io.viamo.flow.runner.flowspec.block.IBlockExit
 import io.viamo.flow.runner.flowspec.block.IBlockUIMetadata
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
+
+const val OUTPUT_TYPE = "Core.Output"
 
 interface IOutputBlock : BlockContactEditable {
   override val config: IOutputBlockConfig
 }
 
-
 @Serializable
+@SerialName(OUTPUT_TYPE)
 data class OutputBlock(
   override val uuid: String,
   override val name: String,

@@ -3,14 +3,18 @@ package io.viamo.flow.runner.flowspec.block.type.log
 import io.viamo.flow.runner.flowspec.block.BlockContactEditable
 import io.viamo.flow.runner.flowspec.block.IBlockExit
 import io.viamo.flow.runner.flowspec.block.IBlockUIMetadata
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
+
+const val LOG_TYPE = "Core.Log"
 
 interface ILogBlock : BlockContactEditable {
   override val config: ILogBlockConfig
 }
 
 @Serializable
+@SerialName(LOG_TYPE)
 data class LogBlock(
   override val uuid: String,
   override val name: String,

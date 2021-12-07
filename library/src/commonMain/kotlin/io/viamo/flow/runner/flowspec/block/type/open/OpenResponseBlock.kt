@@ -3,14 +3,18 @@ package io.viamo.flow.runner.flowspec.block.type.open
 import io.viamo.flow.runner.flowspec.block.BlockContactEditable
 import io.viamo.flow.runner.flowspec.block.IBlockExit
 import io.viamo.flow.runner.flowspec.block.IBlockUIMetadata
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
+
+const val OPEN_TYPE = "MobilePrimitives.OpenResponse"
 
 interface IOpenResponseBlock : BlockContactEditable {
   override val config: IOpenResponseBlockConfig
 }
 
 @Serializable
+@SerialName(OPEN_TYPE)
 data class OpenResponseBlock(
   override val uuid: String,
   override val name: String,

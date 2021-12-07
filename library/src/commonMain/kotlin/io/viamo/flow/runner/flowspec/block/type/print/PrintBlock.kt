@@ -3,14 +3,18 @@ package io.viamo.flow.runner.flowspec.block.type.print
 import io.viamo.flow.runner.flowspec.block.BlockContactEditable
 import io.viamo.flow.runner.flowspec.block.IBlockExit
 import io.viamo.flow.runner.flowspec.block.IBlockUIMetadata
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
+
+const val PRINT_TYPE = "ConsoleIO.Print"
 
 interface IPrintBlock : BlockContactEditable {
   override val config: IPrintBlockConfig
 }
 
 @Serializable
+@SerialName(PRINT_TYPE)
 data class PrintBlock(
   override val uuid: String,
   override val name: String,

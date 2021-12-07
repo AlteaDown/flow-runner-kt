@@ -11,31 +11,39 @@ import io.viamo.flow.runner.domain.behaviours.IBehaviourConstructor
 import io.viamo.flow.runner.domain.prompt.BasePrompt
 import io.viamo.flow.runner.domain.prompt.IPromptConfig
 import io.viamo.flow.runner.domain.runners.*
-import io.viamo.flow.runner.ext.JSON
 import io.viamo.flow.runner.flowspec.*
 import io.viamo.flow.runner.flowspec.block.IBlock
 import io.viamo.flow.runner.flowspec.block.IBlockExit
 import io.viamo.flow.runner.flowspec.block.type
 import io.viamo.flow.runner.flowspec.block.type.log.ILogBlock
+import io.viamo.flow.runner.flowspec.block.type.log.LOG_TYPE
 import io.viamo.flow.runner.flowspec.block.type.log.LogBlockRunner
 import io.viamo.flow.runner.flowspec.block.type.message.IMessageBlock
 import io.viamo.flow.runner.flowspec.block.type.message.MessageBlock.Companion.MESSAGE_TYPE
 import io.viamo.flow.runner.flowspec.block.type.message.MessageBlockRunner
 import io.viamo.flow.runner.flowspec.block.type.numeric.INumericResponseBlock
+import io.viamo.flow.runner.flowspec.block.type.numeric.NUMERIC_TYPE
 import io.viamo.flow.runner.flowspec.block.type.numeric.NumericResponseBlockRunner
 import io.viamo.flow.runner.flowspec.block.type.open.IOpenResponseBlock
+import io.viamo.flow.runner.flowspec.block.type.open.OPEN_TYPE
 import io.viamo.flow.runner.flowspec.block.type.open.OpenResponseBlockRunner
 import io.viamo.flow.runner.flowspec.block.type.output.IOutputBlock
+import io.viamo.flow.runner.flowspec.block.type.output.OUTPUT_TYPE
 import io.viamo.flow.runner.flowspec.block.type.output.OutputBlockRunner
 import io.viamo.flow.runner.flowspec.block.type.print.IPrintBlock
+import io.viamo.flow.runner.flowspec.block.type.print.PRINT_TYPE
 import io.viamo.flow.runner.flowspec.block.type.print.PrintBlockRunner
 import io.viamo.flow.runner.flowspec.block.type.run_flow.IRunFlowBlock
+import io.viamo.flow.runner.flowspec.block.type.run_flow.RUN_FLOW_TYPE
 import io.viamo.flow.runner.flowspec.block.type.run_flow.RunFlowBlock
 import io.viamo.flow.runner.flowspec.block.type.run_flow.RunFlowBlockRunner
 import io.viamo.flow.runner.flowspec.block.type.select_many.ISelectManyResponseBlock
+import io.viamo.flow.runner.flowspec.block.type.select_many.SELECT_MANY_TYPE
 import io.viamo.flow.runner.flowspec.block.type.select_many.SelectManyResponseBlockRunner
 import io.viamo.flow.runner.flowspec.block.type.select_one.ISelectOneResponseBlock
+import io.viamo.flow.runner.flowspec.block.type.select_one.SELECT_ONE_TYPE
 import io.viamo.flow.runner.flowspec.block.type.select_one.SelectOneResponseBlockRunner
+import io.viamo.flow.runner.flowspec.block.type.selectcase.CASE_TYPE
 import io.viamo.flow.runner.flowspec.block.type.selectcase.CaseBlockRunner
 import io.viamo.flow.runner.flowspec.block.type.selectcase.ICaseBlock
 import io.viamo.flow.runner.flowspec.block.type.set_group_membership.ISetGroupMembershipBlock
@@ -44,7 +52,6 @@ import io.viamo.flow.runner.flowspec.block.type.set_group_membership.SetGroupMem
 import io.viamo.flow.runner.flowspec.enums.DeliveryStatus
 import io.viamo.flow.runner.flowspec.enums.DeliveryStatus.IN_PROGRESS
 import kotlinx.datetime.*
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonObject
 
 typealias BlockRunnerFactoryStore = Map<String, TBlockRunnerFactory>
@@ -61,17 +68,6 @@ val DEFAULT_BEHAVIOUR_TYPES = listOf(
   BehaviourConstructor(name = "BasicBacktrackingBehaviour",
     new = { context, navigator, promptBuilder -> BasicBacktrackingBehaviour(context, navigator, promptBuilder) })
 )
-
-private const val CASE_TYPE = "Core.Case"
-
-const val OPEN_TYPE = "MobilePrimitives.OpenResponse"
-const val NUMERIC_TYPE = "MobilePrimitives.NumericResponse"
-const val SELECT_ONE_TYPE = "MobilePrimitives.SelectOneResponse"
-const val SELECT_MANY_TYPE = "MobilePrimitives.SelectManyResponse"
-const val OUTPUT_TYPE = "Core.Output"
-const val LOG_TYPE = "Core.Log"
-const val PRINT_TYPE = "ConsoleIO.Print"
-const val RUN_FLOW_TYPE = "Core.RunFlow"
 
 /**
  * Block types that do not request additional input from an "io.viamo.flow.runner."flow-spec".IContact"
@@ -285,16 +281,9 @@ data class FlowRunner(
         return context.cursor
       }
 
-      println("Context:\n" + JSON.encodeToString(context))
-      val blockId = richCursor.findInteraction(context).block_id
-      println("blockId: $blockId")
-      val activeBlock = context.findBlockOnActiveFlowWith(uuid = blockId)
-      println("activeBlock: $activeBlock")
-      runActiveBlockOn(richCursor, activeBlock)
+      runActiveBlockOn(richCursor, context.findBlockOnActiveFlowWith(uuid = richCursor.findInteraction(context).block_id))
 
       var block: IBlock? = findNextBlockOnActiveFlowFor()
-      println("nextBlock:$block")
-      println("context.isNested(): ${context.isNested()}")
       while (block == null && context.isNested()) {
         // nested flow complete, while more of parent flow remains
         block = stepOut()
@@ -314,14 +303,14 @@ data class FlowRunner(
       }
     } while (block != null)
 
-    println("completing")
     complete(context)
     return null
   }
 
   private fun maybeExitNestedFlow(block: IBlock?): IBlock? {
     var block1 = block
-    while (block1 == null && context.isNested()) { // nested flow complete, while more of parent flow remains
+    while (block1 == null && context.isNested()) {
+      // nested flow complete, while more of parent flow remains
       block1 = stepOut()
     }
     return block1
@@ -430,23 +419,26 @@ data class FlowRunner(
    * Apply prompt value onto io.viamo.flow.runner."flow-spec".IBlockInteraction, complete io.viamo.flow.runner.domain.runners.IBlockRunner execution, mark prompt as having been submitted,
    * apply "postInteractionComplete()" hooks over it, and return io.viamo.flow.runner.domain.runners.IBlockRunner's selected exit.
    * @param cursor
-   * @param block
+   * @param activeBlock
    */
-  suspend fun runActiveBlockOn(cursor: Cursor, block: IBlock): IBlockExit {
-    println("\nUnable to..., ${isRichCursorInputRequired(cursor)}, ${cursor.findPromptConfig()?.isSubmitted == true}")
-
-    check(!(isRichCursorInputRequired(cursor) && cursor.findPromptConfig()?.isSubmitted == true)) { "Unable to run against previously processed prompt, ${isRichCursorInputRequired(cursor)}, ${cursor.findPromptConfig()?.isSubmitted == true}" }
+  suspend fun runActiveBlockOn(cursor: Cursor, activeBlock: IBlock): IBlockExit {
+    check(!(isRichCursorInputRequired(cursor) && cursor.findPromptConfig()?.isSubmitted == true)) {
+      "Unable to run against previously processed prompt, ${
+        isRichCursorInputRequired(
+          cursor
+        )
+      }, ${cursor.findPromptConfig()?.isSubmitted == true}"
+    }
 
     if (isRichCursorInputRequired(cursor)) {
       cursor.findInteraction(context).value = cursor.findPrompt(this, context)?.value as String?
       cursor.findInteraction(context).has_response = cursor.findInteraction(context).value != null
     }
 
-    val exit = createBlockRunnerFor(block).run(cursor)
+    val exit = createBlockRunnerFor(activeBlock).run(cursor)
     completeInteraction(cursor.findInteraction(context), exit.uuid)
 
     if (isRichCursorInputRequired(cursor)) {
-      println("Set isSubmitted to true")
       cursor.findPromptConfig()?.isSubmitted = true
     }
 
@@ -528,10 +520,8 @@ data class FlowRunner(
    */
   fun findNextBlockOnActiveFlowFor(): IBlock? {
     return if (context.cursor == null) {
-      println("1")
       context.getActiveFlow().blocks.first()
     } else {
-      println("2")
       context.cursor?.let { findNextBlockFrom(it.findInteraction(context)) }
     }
   }
@@ -600,4 +590,6 @@ interface IFlowRunner {
   suspend fun run(): Cursor?
 
   fun applyReversibleDataOperation(forward: Any, reverse: Any)
-}typealias TBlockRunnerFactory = (block: IBlock, ctx: Context) -> IBlockRunner<*>
+}
+
+typealias TBlockRunnerFactory = (block: IBlock, ctx: Context) -> IBlockRunner<*>

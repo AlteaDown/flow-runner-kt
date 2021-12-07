@@ -3,6 +3,7 @@ package io.viamo.flow.runner.flowspec.block.type.advanced_select_one
 import io.viamo.flow.runner.flowspec.block.BlockContactEditable
 import io.viamo.flow.runner.flowspec.block.IBlockExit
 import io.viamo.flow.runner.flowspec.block.IBlockUIMetadata
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
@@ -13,6 +14,7 @@ interface IAdvancedSelectOneBlock : BlockContactEditable {
 }
 
 @Serializable
+@SerialName(ADVANCED_SELECT_ONE_BLOCK_TYPE)
 data class AdvancedSelectOneBlock(
   override val uuid: String,
   override val name: String,

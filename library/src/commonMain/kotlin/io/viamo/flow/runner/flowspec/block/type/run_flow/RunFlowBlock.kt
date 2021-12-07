@@ -7,14 +7,18 @@ import io.viamo.flow.runner.flowspec.block.BlockContactEditable
 import io.viamo.flow.runner.flowspec.block.IBlock
 import io.viamo.flow.runner.flowspec.block.IBlockExit
 import io.viamo.flow.runner.flowspec.block.IBlockUIMetadata
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
+
+const val RUN_FLOW_TYPE = "Core.RunFlow"
 
 interface IRunFlowBlock : BlockContactEditable {
   override val config: IRunFlowBlockConfig
 }
 
 @Serializable
+@SerialName(RUN_FLOW_TYPE)
 data class RunFlowBlock(
   override val uuid: String,
   override val name: String,

@@ -1,3 +1,9 @@
+import io.viamo.flow.runner.flowspec.Context
+import io.viamo.flow.runner.flowspec.IContext
+import io.viamo.flow.runner.flowspec.resource.IResource
+import io.viamo.flow.runner.flowspec.resource.IResourceValue
+import io.viamo.flow.runner.flowspec.resource.ResourceValue
+
 val UUID_MATCHER = Regex("""/[\d\w]{8}(-[\d\w]{4}){3}-[\d\w]{12}/i""")
 
 fun isUUID(uuid: String): Boolean = uuid.length == 36 && UUID_MATCHER.matches(uuid)
@@ -9,7 +15,7 @@ class ResourceResolver(override val context: IContext) : IResourceResolver {
     val language_id = this.context.language_id
 
     if (!isUUID(resourceId)) {
-      return io.viamo.flow.runner.flowspec.Resource(resourceId, listOf(createTextResourceVariantWith(resourceId, this.context)), this.context)
+      return io.viamo.flow.runner.flowspec.resource.Resource(resourceId, listOf(createTextResourceVariantWith(resourceId, this.context)), this.context)
     }
 
     val resource = this.context.resources.firstOrNull { it.uuid == resourceId }
@@ -17,7 +23,7 @@ class ResourceResolver(override val context: IContext) : IResourceResolver {
 
     val values = resource.values.filter { it.language_id == language_id && it.modes.intersect(mode).isNotEmpty() }
 
-    return io.viamo.flow.runner.flowspec.Resource(resourceId, values, this.context)
+    return io.viamo.flow.runner.flowspec.resource.Resource(resourceId, values, this.context)
   }
 }*/
 
@@ -50,7 +56,7 @@ object ResourceResolver {
     contentType: ContentType,
     flowRunnerContext: FlowRunnerContext? = null,
   ): ResourceValueEntity? {
-    val mode = io.viamo.flow.runner.flowspec.SupportedMode.OFFLINE
+    val mode = io.viamo.flow.runner.flowspec.enums.SupportedMode.OFFLINE
 
     val foundResourceValue = Db.resources.getByUuid(resourceUuid)
       ?.resourceValues
@@ -61,7 +67,7 @@ object ResourceResolver {
       ResourceValueEntity(
         uuid = resourceUuid,
         contentType = contentType,
-        modes = listOf(io.viamo.flow.runner.flowspec.SupportedMode.OFFLINE.value),
+        modes = listOf(io.viamo.flow.runner.flowspec.enums.SupportedMode.OFFLINE.value),
         value = resourceUuid,
         resourceUuid = resourceUuid,
         orgId = orgId,
@@ -72,7 +78,7 @@ object ResourceResolver {
         ResourceValueEntity(
           uuid = resourceUuid,
           contentType = contentType,
-          modes = listOf(io.viamo.flow.runner.flowspec.SupportedMode.OFFLINE.value),
+          modes = listOf(io.viamo.flow.runner.flowspec.enums.SupportedMode.OFFLINE.value),
           value = evaluateExpression(context, foundResourceValue.value, it),
           resourceUuid = resourceUuid,
           orgId = orgId,
@@ -228,3 +234,45 @@ open class BlockWithValue(
     __value__ = value,
   )
 }*/
+/**
+ * io.viamo.flow.runner.flowspec.resource.Resource definition: https://floip.gitbook.io/flow-specification/flows#resources
+ *
+ * Basically, a smarter version of an io.viamo.flow.runner."flow-spec".IResource with
+ * her values having been filtered by (languageId, modes). */
+interface IResourceWithContext : IResource {
+  override val uuid: String
+  override val values: List<IResourceValue>
+
+  fun getText(context: Context): String
+  fun hasText(): Boolean
+
+  fun getAudio(context: Context): String
+  fun hasAudio(): Boolean
+
+  fun getImage(context: Context): String
+  fun hasImage(): Boolean
+
+  fun getVideo(context: Context): String
+  fun hasVideo(): Boolean
+
+  fun getCsv(context: Context): String
+  fun hasCsv(): Boolean
+
+  fun get(context: Context, key: SupportedContentType): String
+  fun has(key: SupportedContentType): Boolean
+}
+
+interface IResourceResolver {
+  val context: IContext
+
+  fun resolve(resourceId: String): IResourceWithContext
+}
+
+fun createTextResourceVariantWith(value: String, ctx: IContext): ResourceValue {
+  return ResourceValue(
+    content_type = SupportedContentType.TEXT,
+    value = value,
+    language_id = ctx.language_id,
+    modes = listOf(ctx.mode),
+  )
+}

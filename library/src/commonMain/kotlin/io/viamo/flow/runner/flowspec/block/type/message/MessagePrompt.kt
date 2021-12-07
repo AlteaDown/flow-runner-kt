@@ -1,9 +1,11 @@
 package io.viamo.flow.runner.flowspec.block.type.message
 
 import PromptValidationException
+import io.viamo.flow.runner.domain.Cursor
 import io.viamo.flow.runner.domain.IFlowRunner
 import io.viamo.flow.runner.domain.prompt.BasePrompt
 import kotlinx.serialization.Serializable
+import kotlin.contracts.ExperimentalContracts
 
 const val MESSAGE_PROMPT_KEY = "Message"
 
@@ -16,9 +18,19 @@ data class MessagePrompt(
   override val interactionId: String,
   override val runner: IFlowRunner,
   override var error: PromptValidationException? = null,
-) : BasePrompt<Nothing?> {
+) : BasePrompt<String?>() {
 
   override val key = MESSAGE_PROMPT_KEY
 
   override fun validate(value: Any?) = true
 }
+
+@ExperimentalContracts
+suspend fun BasePrompt<*>?.expectMessagePrompt(promptAction: suspend MessagePrompt.() -> Cursor?): Cursor? {
+  checkNotNull(this)
+  check(this is MessagePrompt)
+  return this.promptAction()
+}
+
+@ExperimentalContracts
+suspend fun MessagePrompt.submit() = fulfill(value = "")

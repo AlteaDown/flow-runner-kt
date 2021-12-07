@@ -1,4 +1,4 @@
-import io.viamo.flow.runner.flowspec.ThrowableSerializer
+import io.viamo.flow.runner.serialization.ThrowableSerializer
 import kotlinx.serialization.Serializable
 
 /**

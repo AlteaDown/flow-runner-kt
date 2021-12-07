@@ -1,6 +1,6 @@
 package io.viamo.flow.runner.flowspec.block.type.output
 
-import io.viamo.flow.runner.domain.IRichCursor
+import io.viamo.flow.runner.domain.Cursor
 import io.viamo.flow.runner.domain.runners.IBlockRunner
 import io.viamo.flow.runner.flowspec.Context
 import io.viamo.flow.runner.flowspec.IBlockInteraction
@@ -24,10 +24,10 @@ class OutputBlockRunner(
 ) : IBlockRunner<Nothing?> {
 
   override suspend fun initialize(interaction: IBlockInteraction): Nothing? = null
-  override suspend fun run(cursor: IRichCursor): IBlockExit {
+  override suspend fun run(cursor: Cursor): IBlockExit {
     return try {
-      cursor.interaction.value = evaluateToString(block.config.value, context /* TODO: was createEvalContextFrom(context)*/)
-      cursor.interaction.has_response = true
+      cursor.findInteraction(context).value = evaluateToString(block.config.value, context /* TODO: was createEvalContextFrom(context)*/)
+      cursor.findInteraction(context).has_response = true
       block.setContactProperty(context)
       block.firstTrueOrNullBlockExitOrThrow()
     } catch (e: Throwable) {

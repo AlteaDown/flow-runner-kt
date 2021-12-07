@@ -1,6 +1,6 @@
 package io.viamo.flow.runner.ext
 
-import io.viamo.flow.runner.flowspec.FloipSerializer
+import io.viamo.flow.runner.serialization.FloipSerializer
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 

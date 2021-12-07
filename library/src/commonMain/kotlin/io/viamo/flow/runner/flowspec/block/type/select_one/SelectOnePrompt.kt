@@ -19,7 +19,7 @@ data class SelectOnePrompt(
   override val interactionId: String,
   override val runner: IFlowRunner,
   override var error: PromptValidationException? = null,
-) : BasePrompt<String?> {
+) : BasePrompt<String?>() {
 
   override val key = SELECT_MANY_PROMPT_KEY
 

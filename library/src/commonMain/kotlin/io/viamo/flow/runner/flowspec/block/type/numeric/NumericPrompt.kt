@@ -18,7 +18,7 @@ data class NumericPrompt(
   override val interactionId: String,
   override val runner: IFlowRunner,
   override var error: PromptValidationException? = null,
-) : BasePrompt<Double> {
+) : BasePrompt<Double>() {
 
   override val key = NUMERIC_PROMPT_KEY
 

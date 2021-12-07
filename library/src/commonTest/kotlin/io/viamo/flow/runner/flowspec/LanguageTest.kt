@@ -11,13 +11,13 @@ class LanguageTest : ISerializableTest {
 
   @Test
   override fun `is serializable to json then to object`() {
-    Language.createNoNulls().let { original ->
+    Language.buildNoNulls().let { original ->
       assertEquals(original, JSON.decodeFromString(JSON.encodeToString(original)))
     }
   }
 }
 
-fun Language.Companion.createNoNulls(
+fun Language.Companion.buildNoNulls(
   id: String = "id",
   label: String? = "label",
   iso_639_3: String = "iso_639_3",

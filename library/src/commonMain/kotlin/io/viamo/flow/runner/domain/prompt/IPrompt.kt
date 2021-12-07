@@ -2,7 +2,7 @@ package io.viamo.flow.runner.domain.prompt
 
 import PromptValidationException
 import io.viamo.flow.runner.domain.IFlowRunner
-import io.viamo.flow.runner.domain.IRichCursorInputRequired
+import io.viamo.flow.runner.domain.IRichCursor
 import io.viamo.flow.runner.flowspec.block.IBlock
 import kotlinx.serialization.Contextual
 
@@ -28,7 +28,7 @@ interface IPrompt {
   fun validate(value: Any?): Boolean
 
   /** @see {@link io.viamo.flow.runner.domain.prompt.io.viamo.flow.runner.jsMain.kotlin."flow-runner".BasePrompt.fulfill} */
-  suspend fun fulfill(value: Any): IRichCursorInputRequired?
+  suspend fun fulfill(value: Any): IRichCursor?
 }
 
 /** Interface for configuration to resolve and build a {@link io.viamo.flow.runner.domain.prompt.io.viamo.flow.runner.jsMain.kotlin."flow-runner".BasePrompt} instance. */

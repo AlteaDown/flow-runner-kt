@@ -18,7 +18,7 @@ data class OpenPrompt(
   override val interactionId: String,
   override val runner: IFlowRunner,
   override var error: PromptValidationException? = null,
-) : BasePrompt<String?> {
+) : BasePrompt<String?>() {
   override val key = OPEN_PROMPT_KEY
 
   override fun validate(value: Any?): Boolean = (value as String?).let {

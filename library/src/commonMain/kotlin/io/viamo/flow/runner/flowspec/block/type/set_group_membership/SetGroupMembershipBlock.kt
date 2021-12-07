@@ -1,17 +1,20 @@
-package io.viamo.flow.runner.flowspec.block.type.numeric
+package io.viamo.flow.runner.flowspec.block.type.set_group_membership
 
-import io.viamo.flow.runner.flowspec.block.IBlockContactEditable
+import io.viamo.flow.runner.flowspec.block.BlockContactEditable
 import io.viamo.flow.runner.flowspec.block.IBlockExit
 import io.viamo.flow.runner.flowspec.block.IBlockUIMetadata
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
-interface INumericResponseBlock : IBlockContactEditable {
-  override val config: INumericBlockConfig
+const val SET_GROUP_MEMBERSHIP_BLOCK_TYPE = "Core.SetGroupMembership"
+
+interface ISetGroupMembershipBlock : BlockContactEditable {
+  override val config: ISetGroupMembershipBlockConfig
 }
 
+
 @Serializable
-data class NumericResponseBlock(
+data class SetGroupMembershipBlock(
   override val uuid: String,
   override val name: String,
   override val label: String?,
@@ -20,5 +23,5 @@ data class NumericResponseBlock(
   override val vendor_metadata: JsonObject?,
   override val ui_metadata: IBlockUIMetadata,
   override val exits: List<IBlockExit>,
-  override val config: INumericBlockConfig
-) : INumericResponseBlock
+  override val config: ISetGroupMembershipBlockConfig
+) : ISetGroupMembershipBlock

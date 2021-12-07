@@ -1,6 +1,7 @@
 package io.viamo.flow.runner.flowspec
 
 import io.viamo.flow.runner.flowspec.block.IBlock
+import io.viamo.flow.runner.flowspec.enums.SupportedMode
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject

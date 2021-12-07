@@ -1,13 +1,13 @@
 package io.viamo.flow.runner.flowspec.block.type.select_one
 
-import io.viamo.flow.runner.flowspec.block.IBlockContactEditable
+import io.viamo.flow.runner.flowspec.block.BlockContactEditable
 import io.viamo.flow.runner.flowspec.block.IBlockExit
 import io.viamo.flow.runner.flowspec.block.IBlockUIMetadata
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
 // todo: currently we don't perform any other behaviour than test evaluation on SelectOne
-interface ISelectOneResponseBlock : IBlockContactEditable {
+interface ISelectOneResponseBlock : BlockContactEditable {
   override val config: ISelectOneResponseBlockConfig
 }
 

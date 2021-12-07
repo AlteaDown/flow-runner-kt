@@ -1,6 +1,6 @@
 package io.viamo.flow.runner.flowspec.block.type.message
 
-import io.viamo.flow.runner.domain.IRichCursor
+import io.viamo.flow.runner.domain.Cursor
 import io.viamo.flow.runner.domain.runners.IBlockRunner
 import io.viamo.flow.runner.flowspec.IBlockInteraction
 import io.viamo.flow.runner.flowspec.IContext
@@ -21,11 +21,11 @@ import io.viamo.flow.runner.flowspec.IContext
 class MessageBlockRunner(
   override val block: IMessageBlock,
   override val context: IContext,
-) : IBlockRunner<Nothing?> {
+) : IBlockRunner<String?> {
 
   override suspend fun initialize(interaction: IBlockInteraction): MessagePromptConfig {
-    return MessagePromptConfig(block.config.prompt, interaction.has_response)
+    return MessagePromptConfig(block.config.prompt, interaction.has_response, interaction.value)
   }
 
-  override suspend fun run(cursor: IRichCursor) = block.firstTrueOrNullBlockExitOrThrow()
+  override suspend fun run(cursor: Cursor) = block.firstTrueOrNullBlockExitOrThrow()
 }

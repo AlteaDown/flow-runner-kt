@@ -1,19 +1,17 @@
-package io.viamo.flow.runner.flowspec.block.type.advanced_select_one
+package io.viamo.flow.runner.flowspec.block.type.print
 
-import io.viamo.flow.runner.flowspec.block.IBlockContactEditable
+import io.viamo.flow.runner.flowspec.block.BlockContactEditable
 import io.viamo.flow.runner.flowspec.block.IBlockExit
 import io.viamo.flow.runner.flowspec.block.IBlockUIMetadata
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
-const val ADVANCED_SELECT_ONE_BLOCK_TYPE = "MobilePrimitives.Extended.AdvancedSelectOne"
-
-interface IAdvancedSelectOneBlock : IBlockContactEditable {
-  override val config: IAdvancedSelectOneBlockConfig
+interface IPrintBlock : BlockContactEditable {
+  override val config: IPrintBlockConfig
 }
 
 @Serializable
-data class AdvancedSelectOneBlock(
+data class PrintBlock(
   override val uuid: String,
   override val name: String,
   override val label: String?,
@@ -21,6 +19,6 @@ data class AdvancedSelectOneBlock(
   override val tags: List<String>?,
   override val vendor_metadata: JsonObject?,
   override val ui_metadata: IBlockUIMetadata,
-  override val config: IAdvancedSelectOneBlockConfig,
   override val exits: List<IBlockExit>,
-) : IAdvancedSelectOneBlock
+  override val config: IPrintBlockConfig
+) : IPrintBlock

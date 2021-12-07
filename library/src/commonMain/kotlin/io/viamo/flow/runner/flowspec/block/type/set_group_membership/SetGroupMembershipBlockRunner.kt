@@ -1,7 +1,7 @@
 package io.viamo.flow.runner.flowspec.block.type.set_group_membership
 
 import ValidationException
-import io.viamo.flow.runner.domain.IRichCursor
+import io.viamo.flow.runner.domain.Cursor
 import io.viamo.flow.runner.domain.runners.IBlockRunner
 import io.viamo.flow.runner.flowspec.Context
 import io.viamo.flow.runner.flowspec.IBlockInteraction
@@ -16,7 +16,7 @@ data class SetGroupMembershipBlockRunner(
 ) : IBlockRunner<Nothing?> {
 
   override suspend fun initialize(interaction: IBlockInteraction): Nothing? = null
-  override suspend fun run(cursor: IRichCursor): IBlockExit {
+  override suspend fun run(cursor: Cursor): IBlockExit {
     return try {
       val group = context.groups.find { group -> group.group_key == block.config.group_key }
           ?: throw ValidationException("Cannot add contact to non-existent group ${block.config.group_key}")

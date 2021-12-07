@@ -28,12 +28,11 @@ fun interface PromptConstructor<VALUE_TYPE> {
  */
 @Suppress("MemberVisibilityCanBePrivate")
 class Prompt<VALUE_TYPE>(
-  val promptConstructor: PromptConstructor<VALUE_TYPE>,
-  val promptKey: String,
+  val builder: PromptConstructor<VALUE_TYPE>,
+  val key: String,
 ) {
 
   companion object {
-    private var VALUES: List<Prompt<*>> = listOf()
 
     val MESSAGE = Prompt(
       { config: IPromptConfig<*>, interactionId: String, runner: IFlowRunner ->
@@ -70,35 +69,10 @@ class Prompt<VALUE_TYPE>(
       OPEN_PROMPT_KEY
     )
 
+    val DEFAULT: List<Prompt<*>> = listOf(MESSAGE, NUMERIC, SELECT_ONE, SELECT_MANY, OPEN)
+
     fun <VALUE_TYPE> addCustomPrompt(promptConstructor: PromptConstructor<VALUE_TYPE>, promptKey: String) {
       Prompt(promptConstructor, promptKey)
-    }
-
-    /** Remove custom prompts from the Enum Class */
-    fun reset() {
-      VALUES = listOf(MESSAGE, NUMERIC, SELECT_ONE, SELECT_MANY, OPEN)
-    }
-
-    /**
-     * Get a prompt, by the key
-     * @param promptKey you can pass io.viamo.flow.runner.domain.prompt.IPromptConfig.kind
-     */
-    fun valueOf(promptKey: String) = VALUES.firstOrNull { prompt -> prompt.promptKey == promptKey }
-
-    fun values() = VALUES
-  }
-
-  /**
-   * Construct a prompt, and supply the Prompt constructor for easy instantiation.
-   *
-   * We do not want the library user of io.viamo.flow.runner.domain.FlowRunner to call this, so io.viamo.flow.runner.domain.FlowRunner should add all custom Prompts via a
-   * builder pattern.
-   */
-  init {
-    if (VALUES.any { prompt -> prompt.promptKey == promptKey }) {
-      println("Attempted to add duplicate promptKey")
-    } else {
-      VALUES = VALUES + this
     }
   }
 }

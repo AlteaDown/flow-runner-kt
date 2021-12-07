@@ -20,7 +20,7 @@ class BlockExitTest : ISerializableTest {
 }
 
 
-fun BlockExit.Companion.create(
+fun BlockExit.Companion.build(
   uuid: String = "0",
   name: String = "BlockExitName",
   destination_block: String? = null,

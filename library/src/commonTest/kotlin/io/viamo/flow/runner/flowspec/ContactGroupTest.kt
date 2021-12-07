@@ -2,6 +2,7 @@ package io.viamo.flow.runner.flowspec
 
 import io.viamo.flow.runner.domain.createFormattedDate
 import io.viamo.flow.runner.ext.JSON
+import io.viamo.flow.runner.flowspec.contact.ContactGroup
 import io.viamo.flow.runner.test.ISerializableTest
 import kotlinx.datetime.Instant
 import kotlinx.serialization.decodeFromString
@@ -13,13 +14,13 @@ class ContactGroupTest : ISerializableTest {
 
   @Test
   override fun `is serializable to json then to object`() {
-    ContactGroup.createNoNulls().let { original ->
+    ContactGroup.buildNoNulls().let { original ->
       assertEquals(original, JSON.decodeFromString(JSON.encodeToString(original)))
     }
   }
 }
 
-fun ContactGroup.Companion.createNoNulls(
+fun ContactGroup.Companion.buildNoNulls(
   group_key: String = "group_key",
   label: String? = "label",
   updated_at: Instant = createFormattedDate(),

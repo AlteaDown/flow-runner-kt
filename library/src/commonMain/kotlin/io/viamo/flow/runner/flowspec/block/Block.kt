@@ -135,8 +135,6 @@ interface IBlock {
   }
 
   fun isLastInFlow() = exits.all { it.destination_block == null }
-
-
 }
 
 /**
@@ -158,7 +156,7 @@ fun evaluateToString(expr: String, ctx: IContext): String {
 
 fun wrapInExprSyntaxWhenAbsent(expr: String) = if (expr.startsWith("@(")) expr else "@($expr)"
 
-interface IBlockContactEditable : IBlock {
+interface BlockContactEditable : IBlock {
   override val config: IBlockConfigContactEditable
 
   /**

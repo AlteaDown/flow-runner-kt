@@ -1,6 +1,6 @@
 package io.viamo.flow.runner.flowspec.block.type.print
 
-import io.viamo.flow.runner.domain.IRichCursor
+import io.viamo.flow.runner.domain.Cursor
 import io.viamo.flow.runner.domain.runners.IBlockRunner
 import io.viamo.flow.runner.flowspec.Context
 import io.viamo.flow.runner.flowspec.IBlockInteraction
@@ -18,7 +18,7 @@ class PrintBlockRunner(
 
   override suspend fun initialize(interaction: IBlockInteraction): Nothing? = null
 
-  override suspend fun run(cursor: IRichCursor): IBlockExit {
+  override suspend fun run(cursor: Cursor): IBlockExit {
     return try {
       println(block.type + evaluateToString(block.config.message, context))
       block.setContactProperty(context)

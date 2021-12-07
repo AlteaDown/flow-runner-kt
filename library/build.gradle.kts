@@ -150,11 +150,11 @@ fun KotlinMultiplatformExtension.kotlinNative() {
 fun KotlinMultiplatformExtension.kotlinJs() {
   js(IR) {
     binaries.executable()
-    browser {
+    /*browser {
       commonWebpackConfig {
         cssSupport.enabled = true
       }
-    }
+    }*/
     nodejs {
     }
   }
@@ -165,10 +165,10 @@ application {
   mainClass.set("io.viamo.flow.runner.ServerKt")
 }
 
-tasks.named<Copy>("jvmProcessResources") {
+/*tasks.named<Copy>("jvmProcessResources") {
   val jsBrowserDistribution = tasks.named("jsBrowserDistribution")
   from(jsBrowserDistribution)
-}
+}*/
 
 tasks.named<JavaExec>("run") {
   dependsOn(tasks.named<Jar>("jvmJar"))

@@ -1,12 +1,15 @@
 package io.viamo.flow.runner.flowspec
 
-import ValidationException
 import io.viamo.flow.runner.collections.Stack
 import io.viamo.flow.runner.domain.*
 import io.viamo.flow.runner.flowspec.block.IBlock
 import io.viamo.flow.runner.flowspec.block.type.run_flow.IRunFlowBlockConfig
 import io.viamo.flow.runner.flowspec.contact.Contact
 import io.viamo.flow.runner.flowspec.contact.IContact
+import io.viamo.flow.runner.flowspec.enums.DeliveryStatus
+import io.viamo.flow.runner.flowspec.enums.SupportedMode
+import io.viamo.flow.runner.flowspec.resource.IResource
+import io.viamo.flow.runner.flowspec.resource.Resource
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -32,7 +35,8 @@ data class Context(
   override var exit_at: Instant? = null,
   override val user_id: String? = null,
   override val org_id: String? = null,
-  override var cursor: Cursor? = null,
+  @Serializable(with = CursorSerializer::class)
+  var cursor: Cursor? = null,
   override val vendor_metadata: JsonObject = JsonObject(emptyMap()),
   override val logs: JsonObject = JsonObject(emptyMap())
 ) : IContext {
@@ -87,55 +91,24 @@ interface IContext {
   val interactions: List<BlockInteraction>
   val nested_flow_block_interaction_id_stack: Stack<String>
   val reversible_operations: List<IReversibleUpdateOperation>
-  val cursor: ICursor?
   val flows: List<IFlow>
   val first_flow_id: String
   val resources: List<IResource>
   val vendor_metadata: JsonObject
   val logs: JsonObject
 
-  fun findInteractionWith(uuid: String): BlockInteraction {
-    return interactions.lastOrNull { it.uuid == uuid }
-        ?: throw ValidationException("Unable to find interaction on context: $uuid in [${interactions.map { it.uuid }}]")
-  }
-
-  fun findFlowWith(uuid: String): IFlow {
-    return flows.find { it.uuid == uuid }
-        ?: throw ValidationException("Unable to find flow on context: $uuid in ${flows.map { it.uuid }}")
-  }
-
-  fun findBlockOnActiveFlowWith(uuid: String): IBlock {
-    return getActiveFlow().findBlockWith(uuid)
-  }
-
-  fun findNestedFlowIdFor(interaction: IBlockInteraction): String {
-    val runFlowBlock = findFlowWith(interaction.flow_id).findBlockWith(interaction.block_id)
-    return (runFlowBlock.config as IRunFlowBlockConfig).flow_id
-  }
-
-  fun getActiveFlowId(): String {
-    return if (nested_flow_block_interaction_id_stack.isEmpty()) {
-      first_flow_id
-    } else {
-      findNestedFlowIdFor(findInteractionWith(nested_flow_block_interaction_id_stack.last()))
-    }
-  }
-
   fun getActiveFlow() = findFlowWith(getActiveFlowId())
+  fun isLastBlockOn(block: IBlock) = !isNested() && block.isLastInFlow()
+  fun isNested() = nested_flow_block_interaction_id_stack.isNotEmpty()
+  fun findInteractionWith(uuid: String) = interactions.last { it.uuid == uuid }
+  fun findFlowWith(uuid: String) = flows.first { it.uuid == uuid }
+  fun findBlockOnActiveFlowWith(uuid: String) = getActiveFlow().findBlockWith(uuid)
+  fun findNestedFlowIdFor(interaction: IBlockInteraction) =
+      (findFlowWith(interaction.flow_id).findBlockWith(interaction.block_id).config as IRunFlowBlockConfig).flow_id
 
-  fun isLastBlockOn(block: IBlock): Boolean {
-    return !isNested() && block.isLastInFlow()
+  fun getActiveFlowId() = if (nested_flow_block_interaction_id_stack.isEmpty()) {
+    first_flow_id
+  } else {
+    findNestedFlowIdFor(findInteractionWith(nested_flow_block_interaction_id_stack.last()))
   }
-
-  fun isNested(): Boolean {
-    return nested_flow_block_interaction_id_stack.isNotEmpty()
-  }
-}
-
-interface IContextWithCursor : IContext {
-  override var cursor: ICursor
-}
-
-interface IContextInputRequired : IContext {
-  override val cursor: ICursorInputRequired
 }

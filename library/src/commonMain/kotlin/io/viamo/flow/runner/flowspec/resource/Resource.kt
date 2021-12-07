@@ -1,26 +1,10 @@
-package io.viamo.flow.runner.flowspec
+package io.viamo.flow.runner.flowspec.resource
 
+import IResourceWithContext
 import ResourceNotFoundException
 import SupportedContentType
-import io.viamo.flow.runner.domain.IResourceWithContext
+import io.viamo.flow.runner.flowspec.Context
 import kotlinx.serialization.Serializable
-
-interface IResourceValue {
-  val language_id: String
-  val content_type: SupportedContentType
-  val mime_type: String?
-  val modes: List<SupportedMode>
-  val value: String
-}
-
-@Serializable
-data class ResourceValue(
-  override val language_id: String,
-  override val content_type: SupportedContentType,
-  override val mime_type: String? = null,
-  override val modes: List<SupportedMode>,
-  override val value: String,
-) : IResourceValue
 
 interface IResource {
   val uuid: String
@@ -35,14 +19,14 @@ data class Resource(
   override val values: List<ResourceValue>,
 ) : IResourceWithContext {
 
-  private fun _getValueByContentType(context:Context, contentType: SupportedContentType): String {
+  private fun _getValueByContentType(context: Context, contentType: SupportedContentType): String {
     val def = _findByContentType(contentType)
         ?: throw ResourceNotFoundException("""Unable to find resource for $contentType, ${context.language_id}, ${context.mode}""")
 
     return def.value
   }
 
-  private fun _getValueByContentAndMimeType(context:Context, contentType: SupportedContentType, mimeType: String): String {
+  private fun _getValueByContentAndMimeType(context: Context, contentType: SupportedContentType, mimeType: String): String {
     val def = _findByContentAndMimeType(contentType, mimeType)
         ?: throw ResourceNotFoundException("Unable to find resource for $contentType, $mimeType, ${context.language_id}, ${context.mode}")
 
@@ -65,10 +49,10 @@ data class Resource(
     return values.find { it.content_type == contentType && it.mime_type == mimeType }
   }
 
-  override fun getAudio(context:Context, ) = _getValueByContentType(context, SupportedContentType.AUDIO)
-  override fun getImage(context:Context, ) = _getValueByContentType(context, SupportedContentType.IMAGE)
+  override fun getAudio(context: Context, ) = _getValueByContentType(context, SupportedContentType.AUDIO)
+  override fun getImage(context: Context, ) = _getValueByContentType(context, SupportedContentType.IMAGE)
 
-  override fun getText(context:Context, ): String {
+  override fun getText(context: Context, ): String {
     /**
      * TODO: was  EvaluatorFactory.create().evaluate(_getValueByContentType(SupportedContentType.TEXT), createEvalContextFrom(context))
      *  Make a Multiplatform lib for JS/JVM that uses the trick we use in Clipboard Android.
@@ -79,23 +63,23 @@ data class Resource(
     return "true" /*EvaluatorFactory.create().evaluate(_getValueByContentType(SupportedContentType.TEXT), createEvalContextFrom(context))*/
   }
 
-  override fun getVideo(context:Context) = _getValueByContentType(context, SupportedContentType.VIDEO)
+  override fun getVideo(context: Context) = _getValueByContentType(context, SupportedContentType.VIDEO)
 
   /**
    * Convenience replacement for getData("text/csv").
    * This should be deprecated and replaced with getData() to stick to the spec and be simpler.
    * @returns equivalent of this.getData("text/csv")
    */
-  override fun getCsv(context:Context, ) = getData(context,"text/csv")
+  override fun getCsv(context: Context, ) = getData(context,"text/csv")
   override fun hasAudio() = _hasByContentType(SupportedContentType.AUDIO)
   override fun hasImage() = _hasByContentType(SupportedContentType.IMAGE)
   override fun hasText() = _hasByContentType(SupportedContentType.TEXT)
   override fun hasVideo() = _hasByContentType(SupportedContentType.VIDEO)
   override fun hasCsv() = hasData("text/csv")
 
-  override fun get(context:Context, key: SupportedContentType) = _getValueByContentType(context, key)
+  override fun get(context: Context, key: SupportedContentType) = _getValueByContentType(context, key)
   override fun has(key: SupportedContentType) = _hasByContentType(key)
 
-  fun getData(context:Context, mimeType: String) = _getValueByContentAndMimeType(context, SupportedContentType.DATA, mimeType)
+  fun getData(context: Context, mimeType: String) = _getValueByContentAndMimeType(context, SupportedContentType.DATA, mimeType)
   fun hasData(mimeType: String): Boolean = _hasByContentAndMimeType(SupportedContentType.DATA, mimeType)
 }

@@ -2,7 +2,10 @@ package io.viamo.flow.runner.domain.behaviours.BacktrackingBehaviour
 
 import ValidationException
 import io.viamo.flow.runner.collections.pop
-import io.viamo.flow.runner.domain.*
+import io.viamo.flow.runner.domain.Cursor
+import io.viamo.flow.runner.domain.IFlowNavigator
+import io.viamo.flow.runner.domain.IPromptBuilder
+import io.viamo.flow.runner.domain.NON_INTERACTIVE_BLOCK_TYPES
 import io.viamo.flow.runner.domain.behaviours.IBehaviour
 import io.viamo.flow.runner.domain.prompt.BasePrompt
 import io.viamo.flow.runner.flowspec.BlockInteraction
@@ -28,19 +31,19 @@ interface IBasicBackTrackingBehaviour : IBehaviour {
    * Generates new prompt from new interaction + resets state to what was {@link io.viamo.flow.runner."flow-spec".IContext.interactions}'s moment
    * @param interaction
    * todo: this should likely take in steps rather than interaction itself */
-  suspend fun jumpTo(interaction: BlockInteraction): RichCursor
+  suspend fun jumpTo(interaction: BlockInteraction): Cursor
 
   /**
    * Regenerates prompt from previous interaction
    * @param steps
    */
-  suspend fun peek(steps: Int = 0, direction: PeekDirection = PeekDirection.LEFT): RichCursorInputRequired
+  suspend fun peek(steps: Int = 0, direction: PeekDirection = PeekDirection.LEFT): Cursor
 
   /**
    * Regenerates prompt + interaction in place of previous interaction; updates {@link io.viamo.flow.runner."flow-spec".IContext.cursor}
    * @param steps
    */
-  suspend fun seek(steps: Int = 0): RichCursor
+  suspend fun seek(steps: Int = 0): Cursor
 }
 
 /**
@@ -59,7 +62,7 @@ data class BasicBacktrackingBehaviour(
     // do nothing for now
   }
 
-  override suspend fun jumpTo(interaction: BlockInteraction): RichCursor {
+  override suspend fun jumpTo(interaction: BlockInteraction): Cursor.RichCursor {
     // jump context.interactions back in time
     val discardedBlockInteractions = context.interactions.subList(
       // truncate intx list to pull us back in time; include provided intx
@@ -91,7 +94,7 @@ data class BasicBacktrackingBehaviour(
     return richCursor
   }
 
-  override suspend fun peek(steps: Int, direction: PeekDirection): RichCursorInputRequired {
+  override suspend fun peek(steps: Int, direction: PeekDirection): Cursor.RichCursor {
     // keep a trace of all interactions we attempt to make a prompt from
     var localSteps = steps
     var prompt: BasePrompt<*>? = null
@@ -122,7 +125,7 @@ data class BasicBacktrackingBehaviour(
     throw ValidationException("Logic error when backtracking.\nSkipped Interactions with No Prompt")
   }
 
-  override suspend fun seek(steps: Int): RichCursor {
+  override suspend fun seek(steps: Int): Cursor {
     // then generate a cursor from desired interaction && set cursor on context
     return jumpTo(peek(steps).interaction)
   }

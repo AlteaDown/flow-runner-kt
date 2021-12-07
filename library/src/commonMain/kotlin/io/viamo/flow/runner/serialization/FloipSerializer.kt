@@ -1,4 +1,4 @@
-package io.viamo.flow.runner.flowspec
+package io.viamo.flow.runner.serialization
 
 import io.viamo.flow.runner.domain.prompt.BasePrompt
 import io.viamo.flow.runner.domain.prompt.IPromptConfig
@@ -16,12 +16,6 @@ import io.viamo.flow.runner.flowspec.block.type.select_many.SelectManyPrompt
 import io.viamo.flow.runner.flowspec.block.type.select_many.SelectManyPromptConfig
 import io.viamo.flow.runner.flowspec.block.type.select_one.SelectOnePrompt
 import io.viamo.flow.runner.flowspec.block.type.select_one.SelectOnePromptConfig
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.buildClassSerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
@@ -68,34 +62,3 @@ object PromptSerializer {
   }
 }
 
-
-object ThrowableSerializer : KSerializer<Throwable?> {
-  override val descriptor: SerialDescriptor = buildClassSerialDescriptor("Throwable") {
-    isNullable = true
-  }
-
-  override fun serialize(encoder: Encoder, value: Throwable?) {
-    value?.apply {
-      encoder.encodeNullableSerializableValue(String.serializer(), message)
-      encoder.encodeNullableSerializableValue(ThrowableSerializer, cause)
-    }
-  }
-
-  override fun deserialize(decoder: Decoder): Nothing? {
-    return null
-  }
-}
-
-object NothingNullableSerializer : KSerializer<Nothing?> {
-  override val descriptor: SerialDescriptor = buildClassSerialDescriptor("Nothing") {
-    isNullable = true
-  }
-
-  override fun serialize(encoder: Encoder, value: Nothing?) {
-    encoder.encodeNull()
-  }
-
-  override fun deserialize(decoder: Decoder): Nothing? {
-    return null
-  }
-}

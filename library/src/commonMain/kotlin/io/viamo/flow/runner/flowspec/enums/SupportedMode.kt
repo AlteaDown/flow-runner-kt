@@ -1,4 +1,4 @@
-package io.viamo.flow.runner.flowspec
+package io.viamo.flow.runner.flowspec.enums
 
 import kotlinx.serialization.Serializable
 

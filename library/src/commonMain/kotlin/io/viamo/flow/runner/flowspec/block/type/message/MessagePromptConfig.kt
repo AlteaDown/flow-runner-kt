@@ -1,7 +1,6 @@
 package io.viamo.flow.runner.flowspec.block.type.message
 
 import io.viamo.flow.runner.domain.prompt.IPromptConfig
-import io.viamo.flow.runner.flowspec.NothingNullableSerializer
 import kotlinx.serialization.Serializable
 
 /**
@@ -11,11 +10,9 @@ import kotlinx.serialization.Serializable
 data class MessagePromptConfig(
   override val prompt: String,
   override var isSubmitted: Boolean?,
-) : IPromptConfig<Nothing?> {
+  override var value: String? = null
+) : IPromptConfig<String?> {
 
   override val kind: String = "Message"
   override val isResponseRequired: Boolean = false
-
-  @Serializable(with = NothingNullableSerializer::class)
-  override var value: Nothing? = null
 }

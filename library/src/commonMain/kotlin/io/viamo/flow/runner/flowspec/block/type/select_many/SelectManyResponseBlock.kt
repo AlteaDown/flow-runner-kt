@@ -1,18 +1,17 @@
-package io.viamo.flow.runner.flowspec.block.type.output
+package io.viamo.flow.runner.flowspec.block.type.select_many
 
-import io.viamo.flow.runner.flowspec.block.IBlockContactEditable
+import io.viamo.flow.runner.flowspec.block.BlockContactEditable
 import io.viamo.flow.runner.flowspec.block.IBlockExit
 import io.viamo.flow.runner.flowspec.block.IBlockUIMetadata
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
-interface IOutputBlock : IBlockContactEditable {
-  override val config: IOutputBlockConfig
+interface ISelectManyResponseBlock : BlockContactEditable {
+  override val config: ISelectManyResponseBlockConfig
 }
 
-
 @Serializable
-data class OutputBlock(
+data class SelectManyResponseBlock(
   override val uuid: String,
   override val name: String,
   override val label: String?,
@@ -21,5 +20,5 @@ data class OutputBlock(
   override val vendor_metadata: JsonObject?,
   override val ui_metadata: IBlockUIMetadata,
   override val exits: List<IBlockExit>,
-  override val config: IOutputBlockConfig
-) : IOutputBlock
+  override val config: ISelectManyResponseBlockConfig
+) : ISelectManyResponseBlock

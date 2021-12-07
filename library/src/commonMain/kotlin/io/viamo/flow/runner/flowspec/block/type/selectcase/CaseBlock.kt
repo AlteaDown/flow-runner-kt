@@ -1,17 +1,19 @@
-package io.viamo.flow.runner.flowspec.block.type.open
+package io.viamo.flow.runner.flowspec.block.type.selectcase
 
-import io.viamo.flow.runner.flowspec.block.IBlockContactEditable
+import io.viamo.flow.runner.flowspec.block.BlockContactEditable
 import io.viamo.flow.runner.flowspec.block.IBlockExit
 import io.viamo.flow.runner.flowspec.block.IBlockUIMetadata
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
-interface IOpenResponseBlock : IBlockContactEditable {
-  override val config: IOpenResponseBlockConfig
+interface ICaseBlock : BlockContactEditable {
+  override val config: ICaseBlockConfig
+  override val exits: List<IBlockExit>
 }
 
+
 @Serializable
-data class OpenResponseBlock(
+data class CaseBlock(
   override val uuid: String,
   override val name: String,
   override val label: String?,
@@ -19,6 +21,6 @@ data class OpenResponseBlock(
   override val tags: List<String>?,
   override val vendor_metadata: JsonObject?,
   override val ui_metadata: IBlockUIMetadata,
-  override val exits: List<IBlockExit>,
-  override val config: IOpenResponseBlockConfig
-) : IOpenResponseBlock
+  override val config: ICaseBlockConfig,
+  override val exits: List<IBlockExit>
+) : ICaseBlock

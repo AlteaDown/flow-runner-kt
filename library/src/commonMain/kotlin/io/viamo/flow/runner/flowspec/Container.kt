@@ -1,5 +1,7 @@
 package io.viamo.flow.runner.flowspec
 
+import io.viamo.flow.runner.flowspec.resource.IResource
+import io.viamo.flow.runner.flowspec.resource.Resource
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 

@@ -1,6 +1,6 @@
 package io.viamo.flow.runner.domain.runners
 
-import io.viamo.flow.runner.domain.IRichCursor
+import io.viamo.flow.runner.domain.Cursor
 import io.viamo.flow.runner.domain.prompt.IPromptConfig
 import io.viamo.flow.runner.flowspec.IBlockInteraction
 import io.viamo.flow.runner.flowspec.IContext
@@ -41,5 +41,5 @@ interface IBlockRunner<T> {
    * but many cases have more complexity around this part of the puzzle.
    * @param cursor
    */
-  suspend fun run(cursor: IRichCursor): IBlockExit
+  suspend fun run(cursor: Cursor): IBlockExit
 }

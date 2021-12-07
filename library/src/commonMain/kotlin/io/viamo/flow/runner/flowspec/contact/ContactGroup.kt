@@ -1,9 +1,19 @@
-package io.viamo.flow.runner.flowspec
+@file:JvmName("ContactKt")
+
+package io.viamo.flow.runner.flowspec.contact
 
 import io.viamo.flow.runner.domain.createFormattedDate
-import io.viamo.flow.runner.flowspec.contact.IContactGroup
+import io.viamo.flow.runner.flowspec.IGroup
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
+import kotlin.jvm.JvmName
+
+typealias ContactGroupResolver = ((group: IGroup) -> Unit)
+
+interface IContactGroup : IGroup {
+  var updated_at: Instant
+  var deleted_at: Instant?
+}
 
 @Serializable
 data class ContactGroup(

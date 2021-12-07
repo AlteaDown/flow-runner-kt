@@ -1,17 +1,18 @@
-package io.viamo.flow.runner.flowspec.block.type.print
+package io.viamo.flow.runner.flowspec.block.type.output
 
-import io.viamo.flow.runner.flowspec.block.IBlockContactEditable
+import io.viamo.flow.runner.flowspec.block.BlockContactEditable
 import io.viamo.flow.runner.flowspec.block.IBlockExit
 import io.viamo.flow.runner.flowspec.block.IBlockUIMetadata
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
-interface IPrintBlock : IBlockContactEditable {
-  override val config: IPrintBlockConfig
+interface IOutputBlock : BlockContactEditable {
+  override val config: IOutputBlockConfig
 }
 
+
 @Serializable
-data class PrintBlock(
+data class OutputBlock(
   override val uuid: String,
   override val name: String,
   override val label: String?,
@@ -20,5 +21,5 @@ data class PrintBlock(
   override val vendor_metadata: JsonObject?,
   override val ui_metadata: IBlockUIMetadata,
   override val exits: List<IBlockExit>,
-  override val config: IPrintBlockConfig
-) : IPrintBlock
+  override val config: IOutputBlockConfig
+) : IOutputBlock

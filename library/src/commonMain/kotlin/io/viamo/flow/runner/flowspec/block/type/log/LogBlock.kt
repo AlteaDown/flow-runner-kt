@@ -1,20 +1,17 @@
-package io.viamo.flow.runner.flowspec.block.type.set_group_membership
+package io.viamo.flow.runner.flowspec.block.type.log
 
-import io.viamo.flow.runner.flowspec.block.IBlockContactEditable
+import io.viamo.flow.runner.flowspec.block.BlockContactEditable
 import io.viamo.flow.runner.flowspec.block.IBlockExit
 import io.viamo.flow.runner.flowspec.block.IBlockUIMetadata
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
-const val SET_GROUP_MEMBERSHIP_BLOCK_TYPE = "Core.SetGroupMembership"
-
-interface ISetGroupMembershipBlock : IBlockContactEditable {
-  override val config: ISetGroupMembershipBlockConfig
+interface ILogBlock : BlockContactEditable {
+  override val config: ILogBlockConfig
 }
 
-
 @Serializable
-data class SetGroupMembershipBlock(
+data class LogBlock(
   override val uuid: String,
   override val name: String,
   override val label: String?,
@@ -23,5 +20,5 @@ data class SetGroupMembershipBlock(
   override val vendor_metadata: JsonObject?,
   override val ui_metadata: IBlockUIMetadata,
   override val exits: List<IBlockExit>,
-  override val config: ISetGroupMembershipBlockConfig
-) : ISetGroupMembershipBlock
+  override val config: ILogBlockConfig
+) : ILogBlock

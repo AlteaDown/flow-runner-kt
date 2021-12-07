@@ -2,6 +2,8 @@ package io.viamo.flow.runner.flowspec
 
 import SupportedContentType
 import io.viamo.flow.runner.ext.JSON
+import io.viamo.flow.runner.flowspec.enums.SupportedMode
+import io.viamo.flow.runner.flowspec.resource.ResourceValue
 import io.viamo.flow.runner.test.ISerializableTest
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -12,13 +14,13 @@ class ResourceValueTest : ISerializableTest {
 
   @Test
   override fun `is serializable to json then to object`() {
-    ResourceValue.createNoNulls().let { original ->
+    ResourceValue.buildNoNulls().let { original ->
       assertEquals(original, JSON.decodeFromString(JSON.encodeToString(original)))
     }
   }
 }
 
-fun ResourceValue.Companion.createNoNulls(
+fun ResourceValue.Companion.buildNoNulls(
   language_id: String = "language_id",
   content_type: SupportedContentType = SupportedContentType.TEXT,
   mime_type: String? = "mime_type",

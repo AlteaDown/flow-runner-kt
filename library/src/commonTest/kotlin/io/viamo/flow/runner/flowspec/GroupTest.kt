@@ -11,13 +11,13 @@ class GroupTest : ISerializableTest {
 
   @Test
   override fun `is serializable to json then to object`() {
-    Group.createNoNulls().let { original ->
+    Group.buildNoNulls().let { original ->
       assertEquals(original, JSON.decodeFromString(JSON.encodeToString(original)))
     }
   }
 }
 
-fun Group.Companion.createNoNulls(
+fun Group.Companion.buildNoNulls(
   group_key: String = "group_key",
   label: String? = "label",
 ) = Group(

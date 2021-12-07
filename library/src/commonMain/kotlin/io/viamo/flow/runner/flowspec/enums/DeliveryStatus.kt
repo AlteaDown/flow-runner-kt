@@ -1,4 +1,4 @@
-package io.viamo.flow.runner.flowspec
+package io.viamo.flow.runner.flowspec.enums
 
 enum class DeliveryStatus {
   QUEUED,

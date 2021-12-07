@@ -13,7 +13,7 @@ data class AdvancedSelectOnePrompt(
   override val interactionId: String,
   override val runner: IFlowRunner,
   override var error: PromptValidationException? = null,
-) : BasePrompt<List<AdvancedSelectOne>> {
+) : BasePrompt<List<AdvancedSelectOne>>() {
 
   override val key = ADVANCED_SELECT_ONE_PROMPT_KEY
 

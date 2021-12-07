@@ -15,13 +15,13 @@ class BlockInteractionTest : ISerializableTest {
 
   @Test
   override fun `is serializable to json then to object`() {
-    BlockInteraction.createNoNulls().let { original ->
+    BlockInteraction.buildNoNulls().let { original ->
       assertEquals(original, JSON.decodeFromString(JSON.encodeToString(original)))
     }
   }
 }
 
-fun BlockInteraction.Companion.createNoNulls(
+fun BlockInteraction.Companion.buildNoNulls(
   uuid: String = "uuid",
   block_id: String = "block_id",
   flow_id: String = "flow_id",

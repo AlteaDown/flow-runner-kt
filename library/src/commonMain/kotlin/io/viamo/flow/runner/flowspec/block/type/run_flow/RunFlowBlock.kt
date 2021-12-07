@@ -3,14 +3,14 @@ package io.viamo.flow.runner.flowspec.block.type.run_flow
 import ValidationException
 import io.viamo.flow.runner.collections.push
 import io.viamo.flow.runner.flowspec.Context
+import io.viamo.flow.runner.flowspec.block.BlockContactEditable
 import io.viamo.flow.runner.flowspec.block.IBlock
-import io.viamo.flow.runner.flowspec.block.IBlockContactEditable
 import io.viamo.flow.runner.flowspec.block.IBlockExit
 import io.viamo.flow.runner.flowspec.block.IBlockUIMetadata
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
-interface IRunFlowBlock : IBlockContactEditable {
+interface IRunFlowBlock : BlockContactEditable {
   override val config: IRunFlowBlockConfig
 }
 

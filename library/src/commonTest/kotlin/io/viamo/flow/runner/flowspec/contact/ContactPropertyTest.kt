@@ -14,13 +14,13 @@ class ContactPropertyTest : ISerializableTest {
 
   @Test
   override fun `is serializable to json then to object`() {
-    ContactProperty.create().let { original ->
+    ContactProperty.build().let { original ->
       assertEquals(original, JSON.decodeFromString(JSON.encodeToString(original)))
     }
   }
 }
 
-fun ContactProperty.Companion.create(
+fun ContactProperty.Companion.build(
   contact_property_field_name: String = "contact_property_field_name",
   created_at: Instant = createFormattedDate(),
   updated_at: Instant = createFormattedDate(),

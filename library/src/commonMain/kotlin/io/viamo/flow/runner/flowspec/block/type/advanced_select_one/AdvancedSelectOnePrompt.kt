@@ -3,12 +3,14 @@ package io.viamo.flow.runner.flowspec.block.type.advanced_select_one
 import PromptValidationException
 import io.viamo.flow.runner.domain.IFlowRunner
 import io.viamo.flow.runner.domain.prompt.BasePrompt
+import io.viamo.flow.runner.flowspec.Context
 import kotlinx.serialization.Serializable
 
 const val ADVANCED_SELECT_ONE_PROMPT_KEY = "AdvancedSelectOne"
 
 @Serializable
 data class AdvancedSelectOnePrompt(
+  override val context: Context,
   override val config: AdvancedSelectOnePromptConfig,
   override val interactionId: String,
   override val runner: IFlowRunner,

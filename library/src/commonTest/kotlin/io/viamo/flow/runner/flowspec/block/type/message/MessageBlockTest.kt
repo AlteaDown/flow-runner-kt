@@ -34,24 +34,23 @@ class MessageBlockTest : ISerializableTest {
   @Test
   @JsName("at_start_of_single_block_flow_message_block_does_not_skip")
   fun `at start of Single Block Flow message block does not skip`() = runTest {
-    val cursor = FlowRunner(
-      context = Context.build(
-        first_flow_id = "1",
-        interactions = mutableListOf(),
-        flows = listOf(
-          Flow.build(
-            uuid = "1",
-            first_block_id = "1",
-            blocks = listOf(
-              MessageBlock.build(
-                uuid = "1",
-                exits = listOf(BlockExit.build())
-              )
+    val context = Context.build(
+      first_flow_id = "1",
+      interactions = mutableListOf(),
+      flows = listOf(
+        Flow.build(
+          uuid = "1",
+          first_block_id = "1",
+          blocks = listOf(
+            MessageBlock.build(
+              uuid = "1",
+              exits = listOf(BlockExit.build())
             )
           )
         )
       )
-    ).initialize()
+    )
+    val cursor = FlowRunner().initializeContext(context)
 
     assertNotNull(cursor.prompt, "Expected Prompt to be not null")
   }

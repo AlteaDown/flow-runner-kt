@@ -5,6 +5,7 @@ import ValidationException
 import io.viamo.flow.runner.domain.IFlowRunner
 import io.viamo.flow.runner.domain.exceptions.InvalidChoiceException
 import io.viamo.flow.runner.domain.prompt.BasePrompt
+import io.viamo.flow.runner.flowspec.Context
 import kotlinx.serialization.Serializable
 
 const val INVALID_AT_LEAST_ONE_SELECTION_REQUIRED = "At least one selection is required, but none provided"
@@ -17,6 +18,7 @@ const val SELECT_MANY_PROMPT_KEY = "SelectMany"
  */
 @Serializable
 data class SelectManyPrompt(
+  override val context: Context,
   override val config: SelectManyPromptConfig,
   override val interactionId: String,
   override val runner: IFlowRunner,
@@ -33,7 +35,7 @@ data class SelectManyPrompt(
           !config.isResponseRequired -> true
           value == null -> false
           value.isEmpty() -> throw ValidationException(INVALID_AT_LEAST_ONE_SELECTION_REQUIRED)
-          else -> validateSelections(value as List<String>)
+          else -> validateSelections(value)
         }
     } else {
       throw IllegalStateException("Expected a List<String>?")
@@ -41,7 +43,7 @@ data class SelectManyPrompt(
 
   }
 
-  private fun validateSelections(selections: List<String>): Boolean {
+  private fun validateSelections(selections: List<*>): Boolean {
     val invalidChoices = selections.filter { selection -> config.choices.none { it.key == selection } }
     if (invalidChoices.isNotEmpty()) {
       throw InvalidChoiceException(INVALID_ALL_SELECTIONS_MUST_EXIST_ON_BLOCK + invalidChoices)

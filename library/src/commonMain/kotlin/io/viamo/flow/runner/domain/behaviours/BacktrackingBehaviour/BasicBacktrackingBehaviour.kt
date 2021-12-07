@@ -11,7 +11,6 @@ import io.viamo.flow.runner.domain.prompt.BasePrompt
 import io.viamo.flow.runner.flowspec.BlockInteraction
 import io.viamo.flow.runner.flowspec.Context
 import io.viamo.flow.runner.flowspec.IBlockInteraction
-import io.viamo.flow.runner.flowspec.IContext
 
 enum class PeekDirection {
   RIGHT,
@@ -31,19 +30,19 @@ interface IBasicBackTrackingBehaviour : IBehaviour {
    * Generates new prompt from new interaction + resets state to what was {@link io.viamo.flow.runner."flow-spec".IContext.interactions}'s moment
    * @param interaction
    * todo: this should likely take in steps rather than interaction itself */
-  suspend fun jumpTo(interaction: BlockInteraction): Cursor
+  suspend fun jumpTo(context: Context, interaction: BlockInteraction): Cursor
 
   /**
    * Regenerates prompt from previous interaction
    * @param steps
    */
-  suspend fun peek(steps: Int = 0, direction: PeekDirection = PeekDirection.LEFT): Cursor
+  suspend fun peek(context: Context, steps: Int = 0, direction: PeekDirection = PeekDirection.LEFT): Cursor
 
   /**
    * Regenerates prompt + interaction in place of previous interaction; updates {@link io.viamo.flow.runner."flow-spec".IContext.cursor}
    * @param steps
    */
-  suspend fun seek(steps: Int = 0): Cursor
+  suspend fun seek(context: Context, steps: Int = 0): Cursor
 }
 
 /**
@@ -51,7 +50,6 @@ interface IBasicBackTrackingBehaviour : IBehaviour {
  * modifications will clear the past's future.
  */
 data class BasicBacktrackingBehaviour(
-  override val context: Context,
   override val navigator: IFlowNavigator,
   override val promptBuilder: IPromptBuilder
 ) : IBasicBackTrackingBehaviour {
@@ -62,7 +60,7 @@ data class BasicBacktrackingBehaviour(
     // do nothing for now
   }
 
-  override suspend fun jumpTo(interaction: BlockInteraction): Cursor.RichCursor {
+  override suspend fun jumpTo(context: Context, interaction: BlockInteraction): Cursor.RichCursor {
     // jump context.interactions back in time
     val discardedBlockInteractions = context.interactions.subList(
       // truncate intx list to pull us back in time; include provided intx
@@ -88,13 +86,13 @@ data class BasicBacktrackingBehaviour(
     val destinationBlock = context.findBlockOnActiveFlowWith(interaction.block_id)
 
     jumpContext = JumpContext(discardedBlockInteractions, interaction)
-    val richCursor = navigator.navigateTo(destinationBlock)
+    val richCursor = navigator.navigateTo(context, destinationBlock)
     jumpContext = null
 
     return richCursor
   }
 
-  override suspend fun peek(steps: Int, direction: PeekDirection): Cursor.RichCursor {
+  override suspend fun peek(context: Context, steps: Int, direction: PeekDirection): Cursor.RichCursor {
     // keep a trace of all interactions we attempt to make a prompt from
     var localSteps = steps
     var prompt: BasePrompt<*>? = null
@@ -104,9 +102,9 @@ data class BasicBacktrackingBehaviour(
     while (prompt == null) {
       try {
         // attempt to build a prompt from the next interaction
-        val intx = _findInteractiveInteractionAt(localSteps, context, direction)
+        val intx = _findInteractiveInteractionAt(context, localSteps, direction)
         val block = context.findFlowWith(intx.flow_id).findBlockWith(intx.block_id)
-        prompt = promptBuilder.buildPromptFor(block, intx)
+        prompt = promptBuilder.buildPromptFor(context, block, intx)
 
         if (prompt != null) {
           prompt = TODO("Was Object.assign(prompt, { value: intx.value }). Also uncomment below after fixing.")
@@ -125,24 +123,24 @@ data class BasicBacktrackingBehaviour(
     throw ValidationException("Logic error when backtracking.\nSkipped Interactions with No Prompt")
   }
 
-  override suspend fun seek(steps: Int): Cursor {
+  override suspend fun seek(context: Context, steps: Int): Cursor {
     // then generate a cursor from desired interaction && set cursor on context
-    return jumpTo(peek(steps).interaction)
+    return jumpTo(context, peek(context, steps).findInteraction(context))
   }
 
-  override fun postInteractionCreate(interaction: BlockInteraction): BlockInteraction {
+  override fun postInteractionCreate(context: Context, interaction: BlockInteraction): BlockInteraction {
     return jumpContext?.let { it ->
       interaction.value = it.destinationInteraction.value
       interaction
     } ?: interaction
   }
 
-  override fun postInteractionComplete(interaction: IBlockInteraction) {
+  override fun postInteractionComplete(context: Context, interaction: IBlockInteraction) {
   }
 
   private fun _findInteractiveInteractionAt(
+    context: Context,
     steps: Int = 0,
-    context: IContext = this.context,
     direction: PeekDirection = PeekDirection.LEFT
   ): IBlockInteraction {
     check(direction == PeekDirection.LEFT || direction == PeekDirection.RIGHT) { "direction must be LEFT or RIGHT, but found $direction" }

@@ -50,23 +50,21 @@ import io.viamo.flow.runner.flowspec.block.type.set_group_membership.ISetGroupMe
 import io.viamo.flow.runner.flowspec.block.type.set_group_membership.SET_GROUP_MEMBERSHIP_BLOCK_TYPE
 import io.viamo.flow.runner.flowspec.block.type.set_group_membership.SetGroupMembershipBlockRunner
 import io.viamo.flow.runner.flowspec.enums.DeliveryStatus
-import io.viamo.flow.runner.flowspec.enums.DeliveryStatus.IN_PROGRESS
 import kotlinx.datetime.*
-import kotlinx.serialization.json.JsonObject
 
 typealias BlockRunnerFactoryStore = Map<String, TBlockRunnerFactory>
 
 interface IFlowNavigator {
-  suspend fun navigateTo(block: IBlock): Cursor.RichCursor
+  suspend fun navigateTo(context: Context, block: IBlock): Cursor.RichCursor
 }
 
 interface IPromptBuilder {
-  suspend fun buildPromptFor(block: IBlock, interaction: IBlockInteraction): BasePrompt<*>?
+  suspend fun buildPromptFor(context: Context, block: IBlock, interaction: IBlockInteraction): BasePrompt<*>?
 }
 
 val DEFAULT_BEHAVIOUR_TYPES = listOf(
   BehaviourConstructor(name = "BasicBacktrackingBehaviour",
-    new = { context, navigator, promptBuilder -> BasicBacktrackingBehaviour(context, navigator, promptBuilder) })
+    new = { navigator, promptBuilder -> BasicBacktrackingBehaviour(navigator, promptBuilder) })
 )
 
 /**
@@ -96,8 +94,6 @@ fun createDefaultBlockRunnerStore(): Map<String, TBlockRunnerFactory> = mapOf(
  * @see README.md for usage details.
  */
 data class FlowRunner(
-  /** Running context, JSON-serializable entity with enough information to start or resume a Flow. */
-  override var context: Context,
   /** Map of block types to a factory producting an io.viamo.flow.runner.domain.runners.IBlockRunner instnace. */
   override val runnerFactoryStore: Map<String, TBlockRunnerFactory> = createDefaultBlockRunnerStore(),
   /** Instance used to "generate()" unique IDs across interaction history. */
@@ -121,149 +117,35 @@ data class FlowRunner(
    * """ */
   private fun initializeBehaviours(behaviourConstructors: List<IBehaviourConstructor>) {
     behaviourConstructors.forEach { behaviourConstructor ->
-      behaviours[behaviourConstructor.getNameAsKey()] = behaviourConstructor.new(context, this, this)
+      behaviours[behaviourConstructor.getNameAsKey()] = behaviourConstructor.new(this, this)
     }
   }
 
-  /**
-   * Initialize entry point into this flow run; typically called internally.
-   * Sets up first block, engages run state and entry timestamp on context.
-   */
-  override suspend fun initialize(): Cursor.RichCursor {
-    val block = findNextBlockOnActiveFlowFor() ?: throw ValidationException("Unable to initialize flow without blocks.")
-
-    context.delivery_status = IN_PROGRESS
-    context.entry_at = createFormattedDate()
-
-    // kick-start by navigating to first block
-    return navigateTo(block)
-  }
-
-  /**
-   * Verify whether or not we have a pointer in interaction history or not.
-   * This identifies whether or not a run is in progress.
-   * @param ctx
-   */
-  fun isInitialized() = context.cursor != null
-
-  /**
-   * Decipher whether or not cursor points to the first interactive block or not.
-   */
-  fun isFirst(): Boolean {
-    return if (isInitialized()) {
-      context.interactions.find { !NON_INTERACTIVE_BLOCK_TYPES.contains(it.type) }
-        ?.let { it.uuid == context.cursor?.findInteraction(context)?.uuid }
-          ?: true
-    } else {
-      true
-    }
-  }
-
-  /**
-   * Decipher whether or not cursor points to the last block from interaction history.
-   */
-  fun isLast(): Boolean {
-    return if (isInitialized()) {
-      context.interactions.lastOrNull()?.uuid == context.cursor?.findInteraction(context)?.uuid
-    } else {
-      true
-    }
-  }
+  override suspend fun initializeContext(context: Context) = context.initialize(this)
 
   /**
    * Either begin or a resume a flow run, leveraging context instance member.
    */
-  override suspend fun run(): Cursor? {
-    if (!isInitialized()) {
-      initialize()
+  override suspend fun run(context: Context): Cursor? {
+    if (!context.isInitialized()) {
+      context.initialize(this)
     }
 
-    return runUntilInputRequiredFrom()
+    return runUntilInputRequiredFrom(context)
   }
 
   /**
-   * Decipher whether or not calling run() will be able to proceed or our cursor's prompt is in an invalid state.
+   * Initialize a block, close off any open past interaction, push newly initialized interaction onto history stack
+   * and apply new cursor onto context.
+   * @param block
    * @param ctx
    */
-  fun isInputRequiredFor(): Boolean {
-    return context.cursor?.let { cursor ->
-      val promptConfig = cursor.findPromptConfig()
-      when {
-        // at end of FlowSession
-        promptConfig == null -> false
-        promptConfig.value == null && promptConfig.isResponseRequired -> true
-        else -> try {
-          val prompt = cursor.findPrompt(this, context)
-          prompt?.validate(prompt.value)
-          false
-        } catch (e: Exception) {
-          e.printStackTrace()
-          true
+  override suspend fun navigateTo(context: Context, block: IBlock): Cursor.RichCursor =
+      context._inflateInteractionAndContainerCursorFor(this, block)
+        .also { cursor ->
+          // todo: this could be findFirstExitOnActiveFlowBlockFor to an Expressions Behaviour
+          context.cacheInteractionByBlockName(context, cursor.interaction, block as IMessageBlock)
         }
-      }
-    } ?: false
-  }
-
-  // todo: this could be findFirstExitOnActiveFlowBlockFor to an Expressions Behaviour
-  //       ie. cacheInteractionByBlockName, applyReversibleDataOperation and reverseLastDataOperation
-  fun cacheInteractionByBlockName(
-    blockInteraction: IBlockInteraction, block: IMessageBlock
-  ): Unit {
-    val uuid = blockInteraction.uuid
-    val entry_at = blockInteraction.entry_at
-    val name = block.name
-    val prompt = block.config.prompt
-
-    if ("block_interactions_by_block_name" !in context.session_vars) {
-      context.session_vars.put("block_interactions_by_block_name", JsonObject(emptyMap()))
-    }
-
-    // create a cache of "{[block.name]: {...}}" for subsequent lookups
-    val blockNameKey = "block_interactions_by_block_name.${name}"
-    val previous = context.session_vars[blockNameKey] // TODO: Implement backtracking
-    /*
-    val resource = prompt?.let { ResourceResolver(context).resolve(prompt) }
-    val current = {
-      __interactionId: uuid,
-      time: entry_at,
-      text: resource != null && resource.hasText() ? resource.getText() : '',
-    }
-
-    applyReversibleDataOperation({$set: {[blockNameKey]: current}}, {$set: {[blockNameKey]: previous}})*/
-  }
-
-  /**
-   * Apply a mutation to "session_vars" and operations in both directions.
-   * These vars are made available in content Expressions.
-   * @param forward
-   * @param reverse
-   * @param context
-   */
-  override fun applyReversibleDataOperation(
-    forward: Any,
-    reverse: Any,
-  ): Unit { //TODO: Implement backtracking
-    /*context.session_vars = update(context.session_vars, forward)
-    context.reversible_operations.push({
-      interactionId: last(context.interactions)?.uuid,
-      forward,
-      reverse,
-    })*/
-  }
-
-  /**
-   * Pop last mutation to "session_vars" and apply its reversal operation.
-   * @param context
-   */ // TODO: Implement backtracking
-  //fun reverseLastDataOperation(context: IContext = this.context): IReversibleUpdateOperation? {
-  //  if (context.reversible_operations.size == 0) {
-  //    return null
-  //  }
-  //
-  //  val lastOperation = context.reversible_operations.last() as IReversibleUpdateOperation
-  //  context.session_vars = update(context.session_vars, lastOperation.reverse)
-  //  return context.reversible_operations.pop()
-  //}
 
   /**
    * Pushes onward through the flow when cursor's prompt has been fulfilled and there are blocks to draw from.
@@ -272,33 +154,33 @@ data class FlowRunner(
    * Typically called internally.
    * @param ctx
    */
-  suspend fun runUntilInputRequiredFrom(): Cursor? {
+  suspend fun runUntilInputRequiredFrom(context: Context): Cursor? {
     val richCursor = context.cursor ?: throw Exception("Expected context.cursor to be non null")
 
     do {
-      if (isInputRequiredFor()) {
+      if (context.isInputRequiredFor(this)) {
         println("Attempted to resume when prompt is not yet fulfilled; resurfacing same prompt instance.")
         return context.cursor
       }
 
-      runActiveBlockOn(richCursor, context.findBlockOnActiveFlowWith(uuid = richCursor.findInteraction(context).block_id))
+      runActiveBlockOn(context, richCursor, context.findBlockOnActiveFlowWith(uuid = richCursor.findInteraction(context).block_id))
 
-      var block: IBlock? = findNextBlockOnActiveFlowFor()
+      var block: IBlock? = context.findNextBlockOnActiveFlowFor()
       while (block == null && context.isNested()) {
         // nested flow complete, while more of parent flow remains
-        block = stepOut()
+        block = stepOut(context)
       }
 
       if (block != null) {
         if (block.type == RUN_FLOW_TYPE) {
           check(block is RunFlowBlock)
 
-          context.cursor = navigateTo(block)
-          block = stepInto(block)
+          context.cursor = navigateTo(context, block)
+          block = stepInto(context, block)
         }
 
         if (block != null) {
-          context.cursor = navigateTo(block)
+          context.cursor = navigateTo(context, block)
         }
       }
     } while (block != null)
@@ -307,11 +189,11 @@ data class FlowRunner(
     return null
   }
 
-  private fun maybeExitNestedFlow(block: IBlock?): IBlock? {
+  private fun maybeExitNestedFlow(context: Context, block: IBlock?): IBlock? {
     var block1 = block
     while (block1 == null && context.isNested()) {
       // nested flow complete, while more of parent flow remains
-      block1 = stepOut()
+      block1 = stepOut(context)
     }
     return block1
   }
@@ -355,7 +237,10 @@ data class FlowRunner(
    * @param ctx
    * @param completedAt
    */
-  fun completeActiveNestedFlow(completedAt: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.UTC)): IBlockInteraction {
+  fun completeActiveNestedFlow(
+    context: Context,
+    completedAt: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+  ): IBlockInteraction {
     val nestedFlowBlockInteractionIdStack = context.nested_flow_block_interaction_id_stack
 
     if (!context.isNested()) {
@@ -368,7 +253,7 @@ data class FlowRunner(
     nestedFlowBlockInteractionIdStack.pop()
 
     // since we've un-nested one level, we may seek using freshly active flow
-    val exit: IBlockExit = findFirstExitOnActiveFlowBlockFor(runFlowIntx)
+    val exit: IBlockExit = context.findFirstExitOnActiveFlowBlockFor(runFlowIntx)
     return completeInteraction(runFlowIntx, exit.uuid, completedAt)
   }
 
@@ -387,31 +272,10 @@ data class FlowRunner(
   }
 
   /**
-   * Generate an io.viamo.flow.runner."flow-spec".IBlockInteraction, apply "postInteractionCreate()" hooks over it,
-   * generate cursor with full-fledged prompt.
-   * @param block
-   * @param flowId
-   * @param originFlowId
-   * @param originBlockInteractionId
-   */
-  suspend fun initializeOneBlockInteraction(
-    block: IBlock,
-    flowId: String,
-    originFlowId: String?,
-    originBlockInteractionId: String?,
-    createPrompt: suspend IBlockInteraction.() -> BasePrompt<*>?
-  ): Cursor.RichCursor {
-    var interaction = BlockInteraction.createBlockInteractionFor(block, flowId, originFlowId, originBlockInteractionId, idGenerator)
-    interaction = behaviours.values.fold(interaction) { blockInteraction, behaviour -> (behaviour.postInteractionCreate(blockInteraction)) }
-
-    return Cursor.RichCursor(interaction, interaction.createPrompt())
-  }
-
-  /**
    * Type guard providing insight into whether or not prompt presence can be relied upon.
    * @param richCursor
    */
-  fun isRichCursorInputRequired(richCursor: Cursor): Boolean {
+  fun isRichCursorInputRequired(context: Context, richCursor: Cursor): Boolean {
     return richCursor.findPrompt(this, context) != null
   }
 
@@ -421,28 +285,25 @@ data class FlowRunner(
    * @param cursor
    * @param activeBlock
    */
-  suspend fun runActiveBlockOn(cursor: Cursor, activeBlock: IBlock): IBlockExit {
-    check(!(isRichCursorInputRequired(cursor) && cursor.findPromptConfig()?.isSubmitted == true)) {
-      "Unable to run against previously processed prompt, ${
-        isRichCursorInputRequired(
-          cursor
-        )
-      }, ${cursor.findPromptConfig()?.isSubmitted == true}"
+  suspend fun runActiveBlockOn(context: Context, cursor: Cursor, activeBlock: IBlock): IBlockExit {
+    check(!(isRichCursorInputRequired(context, cursor) && cursor.findPromptConfig()?.isSubmitted == true)) {
+      """Unable to run against previously processed prompt, ${isRichCursorInputRequired(context, cursor)}, 
+        |${cursor.findPromptConfig()?.isSubmitted == true}""".trimMargin()
     }
 
-    if (isRichCursorInputRequired(cursor)) {
+    if (isRichCursorInputRequired(context, cursor)) {
       cursor.findInteraction(context).value = cursor.findPrompt(this, context)?.value as String?
       cursor.findInteraction(context).has_response = cursor.findInteraction(context).value != null
     }
 
-    val exit = createBlockRunnerFor(activeBlock).run(cursor)
+    val exit = createBlockRunnerFor(context, activeBlock).run(cursor)
     completeInteraction(cursor.findInteraction(context), exit.uuid)
 
-    if (isRichCursorInputRequired(cursor)) {
+    if (isRichCursorInputRequired(context, cursor)) {
       cursor.findPromptConfig()?.isSubmitted = true
     }
 
-    behaviours.values.forEach { behaviour -> behaviour.postInteractionComplete(cursor.findInteraction(context)) }
+    behaviours.values.forEach { behaviour -> behaviour.postInteractionComplete(context, cursor.findInteraction(context)) }
 
     return exit
   }
@@ -453,36 +314,8 @@ data class FlowRunner(
    * @param block
    * @param ctx
    */
-  fun createBlockRunnerFor(block: IBlock): IBlockRunner<*> = runnerFactoryStore[block.type]?.invoke(block, context)
+  fun createBlockRunnerFor(context: Context, block: IBlock): IBlockRunner<*> = runnerFactoryStore[block.type]?.invoke(block, context)
       ?: throw ValidationException("Unable to find factory for block type: ${block.type}")
-
-  /**
-   * Initialize a block, close off any open past interaction, push newly initialized interaction onto history stack
-   * and apply new cursor onto context.
-   * @param block
-   * @param ctx
-   */
-  override suspend fun navigateTo(block: IBlock): Cursor.RichCursor = _inflateInteractionAndContainerCursorFor(block).apply {
-    // todo: this could be findFirstExitOnActiveFlowBlockFor to an Expressions Behaviour
-    cacheInteractionByBlockName(interaction, block as IMessageBlock)
-  }
-
-  private suspend fun _inflateInteractionAndContainerCursorFor(block: IBlock): Cursor.RichCursor {
-    val originInteractionId = context.nested_flow_block_interaction_id_stack.lastOrNull()
-
-    val richCursor = initializeOneBlockInteraction(
-      block,
-      context.getActiveFlowId(),
-      originInteractionId?.let { context.findInteractionWith(originInteractionId).flow_id },
-      originInteractionId,
-    ) { buildPromptFor(block, this) }
-
-    context.interactions.add(richCursor.interaction)
-
-    context.cursor = richCursor
-
-    return richCursor
-  }
 
   /**
    * Stepping out is the act of moving back into parent flow.
@@ -495,7 +328,7 @@ data class FlowRunner(
    *       Not when stepping out, because when stepping out, we're connecting previous RunFlow output
    *       to next block; when stepping IN, we need an explicit navigation to inject RunFlow in between
    *       the two Flows. */
-  fun stepOut() = findNextBlockFrom(completeActiveNestedFlow())
+  fun stepOut(context: Context) = context.findNextBlockFrom(completeActiveNestedFlow(context))
 
   /**
    * Stepping into is the act of moving into a child flow.
@@ -506,53 +339,15 @@ data class FlowRunner(
    *
    * todo: would it be possible for stepping into and out of be handled by the RunFlow itself?
    *       Eg. these are esentially RunFlowRunner's .start() + .resume() equivalents */
-  fun stepInto(runFlowBlock: RunFlowBlock) = runFlowBlock.stepIntoAndGetNextBlock(this.context)
-
-  fun findFirstExitOnActiveFlowBlockFor(blockInteraction: IBlockInteraction): IBlockExit {
-    val exits = (context.findBlockOnActiveFlowWith(blockInteraction.block_id)).exits
-    return exits.first()
-  }
-
-  /**
-   * Find the active flow, then return first block on that flow if we've yet to initialize,
-   * otherwise leverage current interaction's selected exit pointer.
-   * @param ctx
-   */
-  fun findNextBlockOnActiveFlowFor(): IBlock? {
-    return if (context.cursor == null) {
-      context.getActiveFlow().blocks.first()
-    } else {
-      context.cursor?.let { findNextBlockFrom(it.findInteraction(context)) }
-    }
-  }
-
-  /**
-   * Find next block leveraging destinationBlock on current interaction's "selectedExit".
-   * Raises when "selectedExitId" absent.
-   * @param block_id
-   * @param selectedExitId
-   * @param ctx
-   */
-  fun findNextBlockFrom(blockInteraction: IBlockInteraction): IBlock? {
-    val selectedExitId = blockInteraction.selected_exit_id
-    checkNotNull(selectedExitId) { "Unable to navigate past incomplete interaction; did you forget to call runner.run()?" }
-
-    val destinationBlock = getDestinationBlock(blockInteraction, selectedExitId)
-    return context.getActiveFlow().blocks.find { it.uuid == destinationBlock }
-  }
-
-  private fun getDestinationBlock(
-    blockInteraction: IBlockInteraction,
-    selected_exit_id: String
-  ) = context.findBlockOnActiveFlowWith(blockInteraction.block_id)
-    .findBlockExitWith(selected_exit_id).destination_block
+  fun stepInto(context: Context, runFlowBlock: RunFlowBlock) = runFlowBlock.stepIntoAndGetNextBlock(context)
 
   suspend fun _inflatePromptForBlockOnto(
+    context: Context,
     richCursor: IRichCursor,
     block: IBlock,
     blockInteraction: IBlockInteraction = richCursor.interaction,
   ): BasePrompt<*>? {
-    return buildPromptFor(block, blockInteraction)
+    return buildPromptFor(context, block, blockInteraction)
   }
 
   /**
@@ -561,8 +356,8 @@ data class FlowRunner(
    * @param block
    * @param interaction
    */
-  override suspend fun buildPromptFor(block: IBlock, interaction: IBlockInteraction): BasePrompt<*>? {
-    return createPromptFrom(createBlockRunnerFor(block).initialize(interaction), interaction)
+  override suspend fun buildPromptFor(context: Context, block: IBlock, interaction: IBlockInteraction): BasePrompt<*>? {
+    return createPromptFrom(context, createBlockRunnerFor(context, block).initialize(interaction), interaction)
   }
 
   /**
@@ -571,25 +366,22 @@ data class FlowRunner(
    * @param config
    * @param interaction
    */
-  fun createPromptFrom(config: IPromptConfig<*>?, interaction: IBlockInteraction?): BasePrompt<*>? {
+  fun createPromptFrom(context: Context, config: IPromptConfig<*>?, interaction: IBlockInteraction?): BasePrompt<*>? {
     return if (config == null || interaction == null) {
       null
     } else {
       val promptConstructor = customPrompts.firstOrNull { prompt -> prompt.key == config.kind }?.builder
-      promptConstructor?.new(config, interaction.uuid, this)
+      promptConstructor?.new(context, config, interaction.uuid, this)
     }
   }
 }
 
 interface IFlowRunner {
-  val context: IContext
   val runnerFactoryStore: Map<String, TBlockRunnerFactory>
 
-  suspend fun initialize(): IRichCursor?
+  suspend fun initializeContext(context: Context): IRichCursor?
 
-  suspend fun run(): Cursor?
-
-  fun applyReversibleDataOperation(forward: Any, reverse: Any)
+  suspend fun run(context: Context): Cursor?
 }
 
 typealias TBlockRunnerFactory = (block: IBlock, ctx: Context) -> IBlockRunner<*>

@@ -4,6 +4,7 @@ import PromptValidationException
 import ValidationException
 import io.viamo.flow.runner.domain.IFlowRunner
 import io.viamo.flow.runner.domain.prompt.BasePrompt
+import io.viamo.flow.runner.flowspec.Context
 import kotlinx.serialization.Serializable
 
 const val OPEN_PROMPT_KEY = "Open"
@@ -14,6 +15,7 @@ const val OPEN_PROMPT_KEY = "Open"
  */
 @Serializable
 data class OpenPrompt(
+  override val context: Context,
   override val config: OpenPromptConfig,
   override val interactionId: String,
   override val runner: IFlowRunner,

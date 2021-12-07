@@ -4,6 +4,7 @@ import PromptValidationException
 import ValidationException
 import io.viamo.flow.runner.domain.Cursor
 import io.viamo.flow.runner.domain.IFlowRunner
+import io.viamo.flow.runner.flowspec.Context
 import io.viamo.flow.runner.flowspec.block.IBlock
 import kotlinx.serialization.Transient
 
@@ -16,6 +17,9 @@ interface IBasePrompt<VALUE> {
   val interactionId: String
   val key: String
   var value: VALUE?
+
+  @Transient
+  val context: Context
 
   @Transient
   val runner: IFlowRunner
@@ -31,8 +35,8 @@ interface IBasePrompt<VALUE> {
 
   val block
     get(): IBlock? = try {
-      runner.context.findFlowWith(runner.context.findInteractionWith(interactionId).flow_id)
-        .findBlockWith(uuid = runner.context.findInteractionWith(interactionId).block_id)
+      context.findFlowWith(context.findInteractionWith(interactionId).flow_id)
+        .findBlockWith(uuid = context.findInteractionWith(interactionId).block_id)
     } catch (e: ValidationException) {
       e.printStackTrace()
       throw e
@@ -62,13 +66,13 @@ abstract class BasePrompt<VALUE> : IBasePrompt<VALUE> {
     get() = config.value
     set(value) {
       try {
-        this.validate(value)
+        validate(value)
       } catch (e: PromptValidationException) {
         e.printStackTrace()
-        this.error = e
+        error = e
       }
 
-      this.config.value = value
+      config.value = value
       field = value
     }
 
@@ -78,6 +82,6 @@ abstract class BasePrompt<VALUE> : IBasePrompt<VALUE> {
       this.value = value
     }
 
-    return this.runner.run()
+    return runner.run(this.context)
   }
 }

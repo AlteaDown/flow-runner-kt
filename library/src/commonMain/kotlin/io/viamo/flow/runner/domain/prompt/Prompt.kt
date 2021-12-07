@@ -1,6 +1,7 @@
 import io.viamo.flow.runner.domain.IFlowRunner
 import io.viamo.flow.runner.domain.prompt.BasePrompt
 import io.viamo.flow.runner.domain.prompt.IPromptConfig
+import io.viamo.flow.runner.flowspec.Context
 import io.viamo.flow.runner.flowspec.block.type.message.MESSAGE_PROMPT_KEY
 import io.viamo.flow.runner.flowspec.block.type.message.MessagePrompt
 import io.viamo.flow.runner.flowspec.block.type.message.MessagePromptConfig
@@ -19,7 +20,7 @@ interface IPromptFactory<T> where T : IPromptConfig<T> {
 }
 
 fun interface PromptConstructor<VALUE_TYPE> {
-  fun new(config: IPromptConfig<*>, interactionId: String, runner: IFlowRunner): BasePrompt<VALUE_TYPE>
+  fun new(context: Context, config: IPromptConfig<*>, interactionId: String, runner: IFlowRunner): BasePrompt<VALUE_TYPE>
 }
 
 /**
@@ -35,36 +36,36 @@ class Prompt<VALUE_TYPE>(
   companion object {
 
     val MESSAGE = Prompt(
-      { config: IPromptConfig<*>, interactionId: String, runner: IFlowRunner ->
-        MessagePrompt(config as MessagePromptConfig, interactionId, runner)
+      { context: Context, config: IPromptConfig<*>, interactionId: String, runner: IFlowRunner ->
+        MessagePrompt(context, config as MessagePromptConfig, interactionId, runner)
       },
       MESSAGE_PROMPT_KEY
     )
 
     val NUMERIC = Prompt(
-      { config: IPromptConfig<*>, interactionId: String, runner: IFlowRunner ->
-        NumericPrompt(config as NumericPromptConfig, interactionId, runner)
+      { context: Context, config: IPromptConfig<*>, interactionId: String, runner: IFlowRunner ->
+        NumericPrompt(context, config as NumericPromptConfig, interactionId, runner)
       },
       NUMERIC_PROMPT_KEY
     )
 
     val SELECT_ONE = Prompt(
-      { config: IPromptConfig<*>, interactionId: String, runner: IFlowRunner ->
-        SelectOnePrompt(config as SelectOnePromptConfig, interactionId, runner)
+      { context: Context, config: IPromptConfig<*>, interactionId: String, runner: IFlowRunner ->
+        SelectOnePrompt(context, config as SelectOnePromptConfig, interactionId, runner)
       },
       SELECT_ONE_PROMPT_KEY
     )
 
     val SELECT_MANY = Prompt(
-      { config: IPromptConfig<*>, interactionId: String, runner: IFlowRunner ->
-        SelectManyPrompt(config as SelectManyPromptConfig, interactionId, runner)
+      { context: Context, config: IPromptConfig<*>, interactionId: String, runner: IFlowRunner ->
+        SelectManyPrompt(context, config as SelectManyPromptConfig, interactionId, runner)
       },
       NUMERIC_PROMPT_KEY
     )
 
     val OPEN = Prompt(
-      { config: IPromptConfig<*>, interactionId: String, runner: IFlowRunner ->
-        SelectOnePrompt(config as SelectOnePromptConfig, interactionId, runner)
+      { context: Context, config: IPromptConfig<*>, interactionId: String, runner: IFlowRunner ->
+        SelectOnePrompt(context, config as SelectOnePromptConfig, interactionId, runner)
       },
       OPEN_PROMPT_KEY
     )

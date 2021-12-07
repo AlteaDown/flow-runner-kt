@@ -4,6 +4,7 @@ import PromptValidationException
 import ValidationException
 import io.viamo.flow.runner.domain.IFlowRunner
 import io.viamo.flow.runner.domain.prompt.BasePrompt
+import io.viamo.flow.runner.flowspec.Context
 import io.viamo.flow.runner.flowspec.block.type.select_many.SELECT_MANY_PROMPT_KEY
 import kotlinx.serialization.Serializable
 
@@ -15,6 +16,7 @@ const val SELECT_ONE_PROMPT_KEY = "SelectOne"
  */
 @Serializable
 data class SelectOnePrompt(
+  override val context: Context,
   override val config: SelectOnePromptConfig,
   override val interactionId: String,
   override val runner: IFlowRunner,

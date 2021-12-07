@@ -21,27 +21,26 @@ class FlowRunnerTest {
   @Test
   @JsName("prompt_is_null_when_flow_ends")
   fun `cursor is null when flow ends`() = runTest {
-    val flowRunner = FlowRunner(
-      context = Context.build(
-        first_flow_id = "1",
-        interactions = mutableListOf(),
-        flows = listOf(
-          Flow.build(
-            uuid = "1",
-            first_block_id = "1",
-            blocks = listOf(
-              MessageBlock.build(
-                uuid = "1",
-                exits = listOf(BlockExit.build())
-              )
+    val context = Context.build(
+      first_flow_id = "1",
+      interactions = mutableListOf(),
+      flows = listOf(
+        Flow.build(
+          uuid = "1",
+          first_block_id = "1",
+          blocks = listOf(
+            MessageBlock.build(
+              uuid = "1",
+              exits = listOf(BlockExit.build())
             )
           )
         )
       )
     )
+    val flowRunner = FlowRunner()
 
-    val cursor: Cursor? = flowRunner.initialize()
-      .findPrompt(flowRunner, flowRunner.context)
+    val cursor: Cursor? = flowRunner.initializeContext(context)
+      .findPrompt(flowRunner, context)
       .expectMessagePrompt { fulfill(value = "value") }
 
     assertNull(cursor, "Expected Cursor to be null")

@@ -4,6 +4,7 @@ import PromptValidationException
 import ValidationException
 import io.viamo.flow.runner.domain.IFlowRunner
 import io.viamo.flow.runner.domain.prompt.BasePrompt
+import io.viamo.flow.runner.flowspec.Context
 import kotlinx.serialization.Serializable
 
 const val NUMERIC_PROMPT_KEY = "Numeric"
@@ -14,6 +15,7 @@ const val NUMERIC_PROMPT_KEY = "Numeric"
  */
 @Serializable
 data class NumericPrompt(
+  override val context: Context,
   override val config: NumericPromptConfig,
   override val interactionId: String,
   override val runner: IFlowRunner,

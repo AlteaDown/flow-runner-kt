@@ -4,6 +4,7 @@ import PromptValidationException
 import io.viamo.flow.runner.domain.Cursor
 import io.viamo.flow.runner.domain.IFlowRunner
 import io.viamo.flow.runner.domain.prompt.BasePrompt
+import io.viamo.flow.runner.flowspec.Context
 import kotlinx.serialization.Serializable
 import kotlin.contracts.ExperimentalContracts
 
@@ -14,6 +15,7 @@ const val MESSAGE_PROMPT_KEY = "Message"
  */
 @Serializable
 data class MessagePrompt(
+  override val context: Context,
   override val config: MessagePromptConfig,
   override val interactionId: String,
   override val runner: IFlowRunner,

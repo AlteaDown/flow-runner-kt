@@ -29,7 +29,8 @@ sealed class Cursor {
     override fun findInteractionUuid() = interactionId
     override fun findInteraction(context: Context) = context.findInteractionWith(interactionId)
     override fun findPromptConfig() = promptConfig
-    override fun findPrompt(flowRunner: FlowRunner, context: Context) = flowRunner.createPromptFrom(promptConfig, findInteraction(context))
+    override fun findPrompt(flowRunner: FlowRunner, context: Context) =
+        flowRunner.createPromptFrom(context, promptConfig, findInteraction(context))
 
     fun toRich(flowRunner: FlowRunner, context: Context): RichCursor {
       val interaction = context.findInteractionWith(interactionId)

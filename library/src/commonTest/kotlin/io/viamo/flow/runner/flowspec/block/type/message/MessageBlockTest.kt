@@ -41,7 +41,7 @@ class MessageBlockTest : ISerializableTest {
         Flow.build(
           uuid = "1",
           first_block_id = "1",
-          blocks = listOf(
+          blocks = mutableListOf(
             MessageBlock.build(
               uuid = "1",
               exits = listOf(BlockExit.build())

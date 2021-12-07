@@ -35,7 +35,7 @@ fun Flow.Companion.build(
   vendor_metadata: JsonObject = buildJsonObject { },
   supported_modes: List<SupportedMode> = listOf(SupportedMode.OFFLINE),
   languages: List<Language> = listOf(Language.buildNoNulls()),
-  blocks: List<IBlock> = listOf(),
+  blocks: MutableList<IBlock> = mutableListOf(),
   first_block_id: String = "1",
   exit_block_id: String? = null,
 ) = Flow(
@@ -68,7 +68,7 @@ fun Flow.Companion.buildNoNulls(
     SupportedMode.OFFLINE,
   ),
   languages: List<Language> = listOf(Language.buildNoNulls()),
-  blocks: List<IBlock> = listOf(MessageBlock.createNoNulls()),
+  blocks: MutableList<IBlock> = mutableListOf(MessageBlock.createNoNulls()),
   first_block_id: String = "first_block_id",
   exit_block_id: String? = "exit_block_id",
 ) = Flow(

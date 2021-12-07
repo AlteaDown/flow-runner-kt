@@ -77,7 +77,7 @@ data class Context(
    * Sets up first block, engages run state and entry timestamp on context.
    */
   suspend fun initialize(flowRunner: FlowRunner): Cursor.RichCursor {
-    val block = findNextBlockOnActiveFlowFor() ?: throw ValidationException("Unable to initialize flow without blocks.")
+    val block = findNextBlockOnActiveFlowFor(flowRunner) ?: throw ValidationException("Unable to initialize flow without blocks.")
 
     delivery_status = DeliveryStatus.IN_PROGRESS
     entry_at = createFormattedDate()
@@ -183,11 +183,11 @@ data class Context(
    * otherwise leverage current interaction's selected exit pointer.
    * @param ctx
    */
-  fun findNextBlockOnActiveFlowFor(): IBlock? {
+  fun findNextBlockOnActiveFlowFor(flowRunner: FlowRunner): IBlock? {
     return if (cursor == null) {
       getActiveFlow().blocks.first()
     } else {
-      cursor?.let { findNextBlockFrom(it.findInteraction(this)) }
+      cursor?.let { findNextBlockFrom(flowRunner, it.findInteraction(this)) }
     }
   }
 
@@ -203,12 +203,16 @@ data class Context(
    * @param selectedExitId
    * @param ctx
    */
-  fun findNextBlockFrom(blockInteraction: IBlockInteraction): IBlock? {
+  fun findNextBlockFrom(flowRunner: FlowRunner, blockInteraction: IBlockInteraction): IBlock? {
     val selectedExitId = blockInteraction.selected_exit_id
     checkNotNull(selectedExitId) { "Unable to navigate past incomplete interaction; did you forget to call runner.run()?" }
 
-    val destinationBlock = getDestinationBlock(blockInteraction, selectedExitId)
-    return getActiveFlow().blocks.find { it.uuid == destinationBlock }
+    val destinationBlockId = getDestinationBlock(blockInteraction, selectedExitId)
+    return getActiveFlow().blocks.find { it.uuid == destinationBlockId }
+        ?: destinationBlockId?.let { destinationBlockId ->
+          flowRunner.resolveBlock(getActiveFlowId(), destinationBlockId)
+            ?.also { getActiveFlow().blocks.add(it) }
+        }
   }
 
   private fun getDestinationBlock(blockInteraction: IBlockInteraction, selected_exit_id: String): String? {
@@ -249,8 +253,14 @@ data class Context(
     originBlockInteractionId: String?,
     createPrompt: suspend IBlockInteraction.() -> BasePrompt<*>?
   ): Cursor.RichCursor {
-    var interaction =
-        BlockInteraction.createBlockInteractionFor(block, flowId, originFlowId, originBlockInteractionId, flowRunner.idGenerator)
+    var interaction = BlockInteraction.createBlockInteractionFor(
+      block = block,
+      flowId = flowId,
+      originFlowId = originFlowId,
+      originBlockInteractionId = originBlockInteractionId,
+      idGenerator = flowRunner.idGenerator
+    )
+
     interaction = flowRunner.behaviours.values.fold(interaction) { blockInteraction, behaviour ->
       (behaviour.postInteractionCreate(
         this,
@@ -258,7 +268,8 @@ data class Context(
       ))
     }
 
-    return Cursor.RichCursor(interaction, interaction.createPrompt())
+    val prompt = interaction.createPrompt()
+    return Cursor.RichCursor(interaction, prompt)
   }
 }
 

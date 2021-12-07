@@ -50,6 +50,7 @@ import io.viamo.flow.runner.flowspec.block.type.set_group_membership.ISetGroupMe
 import io.viamo.flow.runner.flowspec.block.type.set_group_membership.SET_GROUP_MEMBERSHIP_BLOCK_TYPE
 import io.viamo.flow.runner.flowspec.block.type.set_group_membership.SetGroupMembershipBlockRunner
 import io.viamo.flow.runner.flowspec.enums.DeliveryStatus
+import io.viamo.flow.runner.flowspec.resource.Resource
 import kotlinx.datetime.*
 
 typealias BlockRunnerFactoryStore = Map<String, TBlockRunnerFactory>
@@ -101,7 +102,11 @@ data class FlowRunner(
   /** Instances providing isolated functionality beyond the default runner, leveraging built-in hooks. */
   val behaviours: MutableMap<String, IBehaviour> = mutableMapOf(),
 
-  var customPrompts: List<Prompt<*>> = emptyList()
+  var customPrompts: List<Prompt<*>> = emptyList(),
+  val resolveBlock: ((flowId: String, blockId: String) -> IBlock?) = { _, _ -> null },
+  val resolveFlow: ((flowId: String) -> Flow?) = { null },
+  val resolveResource: ((resourceId: String) -> Resource?) = { null },
+  val resolveContact: ((contactId: String) -> Resource?) = { null },
 ) : IFlowRunner, IFlowNavigator, IPromptBuilder {
 
   init {
@@ -155,7 +160,6 @@ data class FlowRunner(
    * @param ctx
    */
   suspend fun runUntilInputRequiredFrom(context: Context): Cursor? {
-    val richCursor = context.cursor ?: throw Exception("Expected context.cursor to be non null")
 
     do {
       if (context.isInputRequiredFor(this)) {
@@ -163,9 +167,11 @@ data class FlowRunner(
         return context.cursor
       }
 
-      runActiveBlockOn(context, richCursor, context.findBlockOnActiveFlowWith(uuid = richCursor.findInteraction(context).block_id))
+      val uuid = context.cursor!!.findInteraction(context).block_id
+      val activeBlock = context.findBlockOnActiveFlowWith(uuid = uuid)
+      runActiveBlockOn(context, context.cursor!!, activeBlock)
 
-      var block: IBlock? = context.findNextBlockOnActiveFlowFor()
+      var block: IBlock? = context.findNextBlockOnActiveFlowFor(this)
       while (block == null && context.isNested()) {
         // nested flow complete, while more of parent flow remains
         block = stepOut(context)
@@ -287,7 +293,8 @@ data class FlowRunner(
    */
   suspend fun runActiveBlockOn(context: Context, cursor: Cursor, activeBlock: IBlock): IBlockExit {
     check(!(isRichCursorInputRequired(context, cursor) && cursor.findPromptConfig()?.isSubmitted == true)) {
-      """Unable to run against previously processed prompt, ${isRichCursorInputRequired(context, cursor)}, 
+      """
+        |Unable to run against previously processed prompt, ${isRichCursorInputRequired(context, cursor)}, 
         |${cursor.findPromptConfig()?.isSubmitted == true}""".trimMargin()
     }
 
@@ -328,7 +335,7 @@ data class FlowRunner(
    *       Not when stepping out, because when stepping out, we're connecting previous RunFlow output
    *       to next block; when stepping IN, we need an explicit navigation to inject RunFlow in between
    *       the two Flows. */
-  fun stepOut(context: Context) = context.findNextBlockFrom(completeActiveNestedFlow(context))
+  fun stepOut(context: Context) = context.findNextBlockFrom(this, completeActiveNestedFlow(context))
 
   /**
    * Stepping into is the act of moving into a child flow.

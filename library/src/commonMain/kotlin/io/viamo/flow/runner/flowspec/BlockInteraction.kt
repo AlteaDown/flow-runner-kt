@@ -1,6 +1,7 @@
 package io.viamo.flow.runner.flowspec
 
 import ValidationException
+import io.viamo.flow.runner.domain.FlowRunner
 import io.viamo.flow.runner.domain.IIdGenerator
 import io.viamo.flow.runner.domain.createFormattedDate
 import io.viamo.flow.runner.flowspec.block.IBlock
@@ -66,11 +67,15 @@ data class BlockInteraction(
    * @param selectedExitId
    * @param ctx
    */
-  fun findNextBlockFrom(context: Context): IBlock {
+  fun findNextBlockFrom(flowRunner: FlowRunner, context: Context): IBlock {
     return selected_exit_id?.let { selected_exit_id: String ->
       val block = context.findBlockOnActiveFlowWith(block_id)
-      val destinationBlock = block.findBlockExitWith(selected_exit_id).destination_block
-      (context.getActiveFlow()).blocks.find { it.uuid == destinationBlock }
+      val destinationBlockId = block.findBlockExitWith(selected_exit_id).destination_block
+      (context.getActiveFlow()).blocks.find { it.uuid == destinationBlockId }
+          ?: destinationBlockId?.let { destinationBlockId ->
+            flowRunner.resolveBlock(context.getActiveFlowId(), destinationBlockId)
+              ?.also { context.getActiveFlow().blocks.add(it) }
+          }
     } ?: throw ValidationException("Unable to navigate past incomplete interaction; did you forget to call runner.run()?")
   }
 

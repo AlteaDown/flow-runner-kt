@@ -72,7 +72,7 @@ interface IFlow {
    *
    * @minItems 1
    */
-  val blocks: List<IBlock>
+  val blocks: MutableList<IBlock>
 
   /**
    * The ID of the block in blocks that is at the beginning of the flow.
@@ -106,7 +106,7 @@ data class Flow(
   override val vendor_metadata: JsonObject,
   override val supported_modes: List<SupportedMode>,
   override val languages: List<Language>,
-  override val blocks: List<IBlock>,
+  override val blocks: MutableList<IBlock>,
   override val first_block_id: String,
   override val exit_block_id: String?
 ): IFlow
